@@ -61,6 +61,9 @@ class APIHandler:
                 timeout=self.timeout
             )
             response.raise_for_status()
+            #save json to file
+            with open(f"data/json/cache.json", "w", encoding="utf-8") as f:
+                json.dump(response.json(), f, ensure_ascii=False, indent=2)
             return response.json()
         except requests.exceptions.RequestException as e:
             logger.error(f"API request failed: {e}")
@@ -73,13 +76,15 @@ class APIHandler:
         to_date = pd.Timestamp.now()
         from_date = to_date - pd.Timedelta(range)
         return self.fetch_history(from_date, to_date, ticker, resolution)
+    
+
 
 
 def test_api():
     handler = APIHandler()
     from_date = pd.Timestamp.now() - pd.Timedelta(days=5)
     to_date = pd.Timestamp.now()
-    ticker = "VNINDEX"
+    ticker = "VHM"
     resolution = "1"
 
     data = handler.fetch_history(from_date, to_date, ticker, resolution)
