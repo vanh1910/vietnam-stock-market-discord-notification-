@@ -82,20 +82,5 @@ class APIHandler:
     
 
 
-
-def test_api():
-    handler = APIHandler()
-    from_date = pd.Timestamp.now() - pd.Timedelta(days=5)
-    to_date = pd.Timestamp.now()
-    ticker = "VHM"
-    resolution = "1"
-
-    data = handler.fetch_history(from_date, to_date, ticker, resolution)
-    if data:
-        print(json.dumps(data, indent=2, ensure_ascii=False))
-    else:
-        logger.warning("Failed to retrieve data")
-
-
 if __name__ == "__main__":
-    test_api()
+    APIHandler.fetch_realtime_data("1", "1D", "VND")
