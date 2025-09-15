@@ -61,10 +61,13 @@ class APIHandler:
                 timeout=self.timeout
             )
             response.raise_for_status()
+            #add params to response
+            data = response.json()
+            data["params"] = params
             #save json to file
             with open(f"data/json/cache.json", "w", encoding="utf-8") as f:
-                json.dump(response.json(), f, ensure_ascii=False, indent=2)
-            return response.json()
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            return data
         except requests.exceptions.RequestException as e:
             logger.error(f"API request failed: {e}")
             return None
