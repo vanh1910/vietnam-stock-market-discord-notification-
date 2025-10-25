@@ -12,6 +12,7 @@ import os
 import platform
 import random
 import sys
+import asyncio
 
 import aiosqlite
 import discord
@@ -287,6 +288,9 @@ class DiscordBot(commands.Bot):
         else:
             raise error
 
+def main():
+    bot = DiscordBot()
+    bot.run(os.getenv("token"))
 
-bot = DiscordBot()
-bot.run(os.getenv("token"))
+if __name__ == "__main__":
+    main()
