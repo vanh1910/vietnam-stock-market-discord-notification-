@@ -147,7 +147,7 @@ class DiscordBot(commands.Bot):
             f"{rootpath}/data/database.db"
         ) as db:
             with open(
-                f"{rootpath}/data/schema.sql",
+                f"{rootpath}/bot/database/schema.sql",
                 encoding = "utf-8"
             ) as file:
                 await db.executescript(file.read())
