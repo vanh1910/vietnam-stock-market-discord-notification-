@@ -22,14 +22,35 @@ class Stock(commands.Cog, name="stock"):
 
 
         """
-    @commands.command(name="stockprice", description="get lastest stock price of a ticker")
-    async def stock(self, context: Context, ticker) -> None:
-        data = self.stock_api.fetch_realtime_data("1H", pd.Timedelta(3,"d"), ticker)
-        await context.send(data)
+    @commands.command(name="stock", description="get lastest stock price of a ticker")
+    async def stock(self, context: Context, *args) -> None:
+        subcommand = args[0]
+        message = ""
+        match subcommand:
+            case "price":
+                ticker = args[1]
+                price = self.get_price(ticker)
+                message = f"{ticker} current price is {price}"
+        
+        await context.send(message)
+
+
+                
+    def get_price(self, ticker):
+        range = pd.Timedelta(15,"d")
+        data = self.stock_api.fetch_realtime_data("1D", range, ticker)
+        return data["c"][-1]
 
 
 async def setup(bot) -> None:
     await bot.add_cog(Stock(bot))
-        
 
+def test():
+    api = APIHandler()
+    range = pd.Timedelta(15,"d")
+    data = api.fetch_realtime_data("1D", range, "VCB")
+    return data["c"][-1]
+        
+if __name__ == "__main__":
+    print(test())
 
