@@ -83,4 +83,6 @@ class APIHandler:
 
 
 if __name__ == "__main__":
-    APIHandler.fetch_realtime_data("1", "1D", "VND")
+    test = APIHandler()
+    range = pd.Timedelta(2, "d")
+    test.fetch_realtime_data("1", range, "VND")

@@ -146,6 +146,11 @@ class Fun(commands.Cog, name="fun"):
             )
         await message.edit(embed=embed, view=None, content=None)
 
+
+    @commands.command("test")
+    async def test(self, context: Context) -> None:
+        await context.send("Answered")  
+
     @commands.hybrid_command(
         name="rps", description="Play the rock paper scissors game against the bot."
     )
