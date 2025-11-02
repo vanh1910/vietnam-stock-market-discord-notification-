@@ -3,6 +3,7 @@ from bot.client import DiscordBot
 import os
 from dotenv import load_dotenv
 # from services.api_handler import api_handler
+from services.keep_alive import keep_alive
 
 # def test_api_handler():
 #     resolution = "10"
@@ -13,9 +14,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
+
 def main():
     bot = DiscordBot()
     bot.run(os.getenv("token"))
+    keep_alive()
 
 if __name__ == "__main__":
     # test_api_handler()
