@@ -22,24 +22,33 @@ class Stock(commands.Cog, name="stock"):
 
 
         """
-    @commands.command(name="stock", description="get lastest stock price of a ticker")
+    @commands.hybrid_group(
+            name="stock", 
+            description="for stock gamblers"
+    )
     async def stock(self, context: Context, *args) -> None:
-        subcommand = args[0]
-        message = ""
-        match subcommand:
-            case "price":
-                ticker = args[1]
-                price = self.get_price(ticker)
-                message = f"{ticker} current price is {price}"
-        
+        if context.invoked_subcommand is None:
+            embed = discord.Embed(
+                description="Please specify a subcommand"
+            )
+        await context.send(embed=embed)
+    
+    @stock.command(
+        name = "price",
+        description = "get latest price"
+    )
+    async def price(self, context:Context, ticker):
+        data = self.stock_api.fetch_realtime_data("1D", pd.Timedelta(15,"d"), ticker)
+        if len(data["c"]) == 0:
+            message = f"Currently no {ticker} price"
+        else:
+            price = data["c"][-1]
+            message = f"{ticker} price currently is {price}"
+    
         await context.send(message)
 
 
-                
-    def get_price(self, ticker):
-        range = pd.Timedelta(15,"d")
-        data = self.stock_api.fetch_realtime_data("1D", range, ticker)
-        return data["c"][-1]
+    
 
 
 async def setup(bot) -> None:
