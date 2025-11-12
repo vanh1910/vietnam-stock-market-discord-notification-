@@ -31,7 +31,7 @@ class Stock(commands.Cog, name="stock"):
             embed = discord.Embed(
                 description="Please specify a subcommand"
             )
-        await context.send(embed=embed)
+        await context.reply(embed=embed)
     
     @stock.command(
         name = "price",
@@ -45,9 +45,46 @@ class Stock(commands.Cog, name="stock"):
             price = data["c"][-1]
             message = f"{ticker} price currently is {price}"
     
-        await context.send(message)
+        await context.reply(message)
 
-
+    @stock.command(
+        name="add",
+        description="register ticker into watchlist"
+    )
+    async def add_ticker(self, context:Context, ticker):
+        server_id = None
+        if context.guild:
+            server_id = context.guild.id
+            
+        user_id = context.author.id
+        try: 
+            await self.bot.database.add_ticker_user(
+                user_id, ticker, server_id
+            )
+            await context.reply(f"Put {ticker} into watchlist successfully")
+        except Exception as e:
+            exception = f"{type(e).__name__}: {e}"
+            self.logger.error(
+                f"Failed to insert {ticker} into tickers_users {Exception}"
+            )
+            await context.reply(f"Failed to add {ticker} to watchlist")
+            
+    @stock.command(
+        name="remove",
+        description="remove ticker from watchlist"
+    ) 
+    async def remove_ticker(self, context:Context, ticker):
+        user_id = context.author.id
+        try:
+            await self.bot.database.remove_tickers_users(user_id,ticker)
+            await context.reply(f"Successfully remove {ticker} from watchlist")
+        except Exception as e:
+            exception = f"{type(e).__name__}: {e}"
+            self.logger.error(
+                f"Failed to remove {ticker} from tickers_users {Exception}"
+            )
+            await context.reply(f"Failed to remove {ticker} from watchlist")
+            
     
 
 

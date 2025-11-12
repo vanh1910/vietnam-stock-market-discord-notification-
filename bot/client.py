@@ -142,6 +142,7 @@ class DiscordBot(commands.Bot):
         self.database = None
         self.bot_prefix = os.getenv("PREFIX")
         self.invite_link = os.getenv("INVITE_LINK")
+        
     async def init_db(self) -> None:
         async with aiosqlite.connect(
             f"{rootpath}/data/database.db"

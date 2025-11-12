@@ -94,3 +94,25 @@ class DatabaseManager:
             for row in result:
                 result_list.append(row)
             return result_list
+        
+
+    async def add_ticker_user(self, user_id, ticker, server_id):
+        await self.connection.execute(
+            "INSERT OR REPLACE INTO tickers_users(user_id, ticker, server_id) VALUES(?,?,?)",
+            (
+                user_id,
+                ticker,
+                server_id
+            )
+        )
+        await self.connection.commit()
+
+    async def remove_tickers_users(self, user_id, ticker):
+        await self.connection.execute(
+            "DELETE FROM tickers_users WHERE user_id = ? AND ticker = ?",
+            (user_id, ticker),
+        ) 
+    
+
+    async def add_ticker_row(self, data, ticker, timestamp):
+        return 0

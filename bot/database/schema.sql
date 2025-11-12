@@ -11,7 +11,6 @@ CREATE TABLE IF NOT EXISTS "tickers_users" (
     "user_id" INTEGER NOT NULL,
     "ticker" VARCHAR(3) NOT NULL,
     "server_id" VARCHAR(20),
-    "isdm" INTEGER NOT NULL,
     PRIMARY KEY ("user_id", "ticker"),
     FOREIGN KEY ("ticker") REFERENCES "tickers"("ticker")
 );
@@ -31,5 +30,5 @@ CREATE TABLE IF NOT EXISTS "tickers" (
 CREATE TABLE IF NOT EXISTS "signals" (
     "signal_id" INTEGER PRIMARY KEY AUTOINCREMENT,
     "type" VARCHAR(10) NOT NULL,
-    "price" INTEGER
+    "value" INTEGER
 )
