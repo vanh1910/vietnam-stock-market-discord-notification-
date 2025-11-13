@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class AsyncAPIHandler:
+class APIHandler:
     BASE_URL = "https://api.vietstock.vn/tvnew/history"
     HEADERS = {
         "User-Agent": "Mozilla/5.0",

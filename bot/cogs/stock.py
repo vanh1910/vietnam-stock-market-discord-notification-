@@ -38,14 +38,19 @@ class Stock(commands.Cog, name="stock"):
         description = "get latest price"
     )
     async def price(self, context:Context, ticker):
-        data = self.stock_api.fetch_realtime_data("1D", pd.Timedelta(15,"d"), ticker)
-        if len(data["c"]) == 0:
-            message = f"Currently no {ticker} price"
-        else:
-            price = data["c"][-1]
-            message = f"{ticker} price currently is {price}"
-    
-        await context.reply(message)
+        async with aiohttp.ClientSession(timeout=self.stock_api.timeout) as session:
+            data = await self.stock_api.fetch_realtime_data(
+                session, "1D",
+                pd.Timedelta(days=15),
+                ticker
+                )
+        try:
+            price = data['c'][-1]
+            await context.reply(f"{ticker} price currently is {price}")
+        except:
+            await context.reply(f"Cannot get {ticker} price")
+            
+
 
     @stock.command(
         name="add",
