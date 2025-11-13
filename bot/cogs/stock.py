@@ -85,6 +85,13 @@ class Stock(commands.Cog, name="stock"):
             )
             await context.reply(f"Failed to remove {ticker} from watchlist")
             
+    @stock.command(
+        name="tickers",
+        description="return all available tickers"
+    )
+    async def get_all_tickers(self, context:Context):
+        tickers = await self.bot.database.get_all_tickers()
+        await context.reply(tickers)    
     
 
 
@@ -96,7 +103,8 @@ def test():
     range = pd.Timedelta(15,"d")
     data = api.fetch_realtime_data("1D", range, "VCB")
     return data["c"][-1]
+
         
 if __name__ == "__main__":
-    print(test())
+    test()
 

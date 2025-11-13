@@ -113,6 +113,16 @@ class DatabaseManager:
             (user_id, ticker),
         ) 
     
+    async def get_all_tickers(self):
+        tickers = []
+        rows = await self.connection.execute(
+            "SELECT DISTINCT ticker from tickers_users"
+        )        
+        tickers = await rows.fetchall()
+        tickers = [row[0] for row in tickers]
+        return tickers
 
     async def add_ticker_row(self, data, ticker, timestamp):
         return 0
+ 
+
