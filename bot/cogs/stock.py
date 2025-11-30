@@ -1,8 +1,9 @@
 import aiohttp
 import discord
+import asyncio
 import pandas as pd
 from discord import app_commands
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord.ext.commands import Context
 from services.api_handler import APIHandler
 
@@ -14,12 +15,10 @@ class Stock(commands.Cog, name="stock"):
         Main stock command handler
 
         Usage:
-            n4!stock save tickers (price)
-            n4!stock remove tickers
+            n4!stock add ticker
+            n4!stock remove ticker
             n4!stock price
-            
-            n4!chart tickers (this one will be done last) webhook?
-
+            n4!stock tickers
 
         """
     @commands.hybrid_group(
@@ -27,6 +26,9 @@ class Stock(commands.Cog, name="stock"):
             description="for stock gamblers"
     )
     async def stock(self, context: Context, *args) -> None:
+        """
+            Get lastest price using vietstock API
+        """
         if context.invoked_subcommand is None:
             embed = discord.Embed(
                 description="Please specify a subcommand"
@@ -57,6 +59,9 @@ class Stock(commands.Cog, name="stock"):
         description="register ticker into watchlist"
     )
     async def add_ticker(self, context:Context, ticker):
+        """
+            Add ticker into your watchlist
+        """
         server_id = None
         if context.guild:
             server_id = context.guild.id
@@ -79,6 +84,9 @@ class Stock(commands.Cog, name="stock"):
         description="remove ticker from watchlist"
     ) 
     async def remove_ticker(self, context:Context, ticker):
+        """
+            Remove ticker from your watchlist
+        """
         user_id = context.author.id
         try:
             await self.bot.database.remove_tickers_users(user_id,ticker)
@@ -95,9 +103,22 @@ class Stock(commands.Cog, name="stock"):
         description="return all available tickers"
     )
     async def get_all_tickers(self, context:Context):
+        """
+            Get all currently tickers in database
+        """
         tickers = await self.bot.database.get_all_tickers()
         await context.reply(tickers)    
     
+    @tasks.loop(minutes=60)
+    async def update_ticker(self) -> None:
+        tickers = await self.bot.database.get_all_tickers()
+        tasks = []
+        for ticker in tickers:
+            task = asyncio.create_task(self.stock_api.get_latest_tickers_data(ticker,1,"1"))
+        
+        
+
+
 
 
 async def setup(bot) -> None:
