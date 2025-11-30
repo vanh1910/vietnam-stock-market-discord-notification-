@@ -23,7 +23,7 @@ class APIHandler:
     def __init__(self, timeout: int = 5):
         self.timeout = aiohttp.ClientTimeout(total=timeout)
 
-    async def fetch_history(
+    async def __fetch_history(
         self,
         session: aiohttp.ClientSession,
         from_date: pd.Timestamp,
@@ -58,21 +58,32 @@ class APIHandler:
             logger.error(f"API request failed for {ticker}: {e}")
             return None
 
-    async def fetch_realtime_data(
+    async def _fetch_realtime_data(
         self,
         session: aiohttp.ClientSession,
         resolution: str,
         range_: pd.Timedelta,
         ticker: str
     ) -> Optional[Dict[str, Any]]:
-        """Lấy dữ liệu thời gian thực (dạng async)."""
+        """Lấy dữ liệu thời gian thực."""
         to_date = pd.Timestamp.now()
         from_date = to_date - range_
-        return await self.fetch_history(session, from_date, to_date, ticker, resolution)
+        return await self._fetch_history(session, from_date, to_date, ticker, resolution)
+
+    async def get_latest_tickers_data(self, *tickers, dayrange, resolution):
+        range_ = pd.Timedelta(days = dayrange)
+
+        async with aiohttp.ClientSession(timeout=self.timeout) as session:
+            tasks = [
+                self._fetch_realtime_data(session, resolution, range_, ticker)
+                for ticker in tickers
+            ]
+            results = await asyncio.gather(*tasks)
+        return results
 
 
 async def main():
-    handler = AsyncAPIHandler()
+    handler = APIHandler()
     range_ = pd.Timedelta(days=2)
     tickers = ["VND", "FPT", "SSI", "HPG", "VCB"]
 
