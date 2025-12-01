@@ -58,7 +58,7 @@ class APIHandler:
             logger.error(f"API request failed for {ticker}: {e}")
             return None
 
-    async def _fetch_realtime_data(
+    async def __fetch_realtime_data(
         self,
         session: aiohttp.ClientSession,
         resolution: str,
@@ -68,20 +68,42 @@ class APIHandler:
         """Lấy dữ liệu thời gian thực."""
         to_date = pd.Timestamp.now()
         from_date = to_date - range_
-        return await self._fetch_history(session, from_date, to_date, ticker, resolution)
+        return await self.__fetch_history(session, from_date, to_date, ticker, resolution)
 
-    async def get_latest_tickers_data(self, *tickers, dayrange, resolution):
-        range_ = pd.Timedelta(days = dayrange)
-
+    async def get_latest_tickers_data(self,tickers: list, from_date: pd.Timestamp, resolution: str):
+        """
+            Get price from a list of tickers from 'from_date' to now
+            Args:
+                tickers (list[str]): A list of ticker symbols
+                from_date (pd.Timestam) Start time
+                resolution (str): Time resolution, only accept "1", "60", "1D"
+        """
+        to_date = pd.Timestamp.now()
         async with aiohttp.ClientSession(timeout=self.timeout) as session:
             tasks = [
-                self._fetch_realtime_data(session, resolution, range_, ticker)
+                self.__fetch_history(session, from_date, to_date, ticker, resolution)
+                for ticker in tickers
+            ]
+            results = await asyncio.gather(*tasks)
+        return results
+
+    async def get_historical_tickers_data(
+            self,
+        tickers: list,
+        from_date: pd.Timestamp,
+        to_date: pd.Timestamp,
+        resolution: str
+    ):
+        async with aiohttp.ClientSession(timeout=self.timeout) as session:
+            tasks = [
+                self.__fetch_history(session, from_date, to_date, ticker, resolution)
                 for ticker in tickers
             ]
             results = await asyncio.gather(*tasks)
         return results
 
 
+ 
 async def main():
     handler = APIHandler()
     range_ = pd.Timedelta(days=2)
