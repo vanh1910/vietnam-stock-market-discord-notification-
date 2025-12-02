@@ -100,6 +100,8 @@ class APIHandler:
                 for ticker in tickers
             ]
             results = await asyncio.gather(*tasks)
+        with open("data/json/realtime_cache.json", "w", encoding="utf-8") as f:
+            json.dump(results, f, ensure_ascii=False, indent=2)
         return results
 
 
