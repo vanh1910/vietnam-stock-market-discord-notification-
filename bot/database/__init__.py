@@ -122,7 +122,36 @@ class DatabaseManager:
         tickers = [row[0] for row in tickers]
         return tickers
 
-    async def add_ticker_row(self, data, ticker, timestamp):
-        return 0
+    async def add_ticker_row(
+            self, data
+        ):
+        ticker = data["params"]["symbol"]
+        timestamp = data["t"][-1]
+        resolution = data["params"]["resolution"]
+        high = data["h"][-1]
+        low = data["l"][-1]
+        open = data["o"][-1]
+        close = data["c"][-1]
+        volume = data["v"][-1]
+
+        await self.connection.execute(
+            "INSERT OR REPLACE INTO tickers(" \
+            "   ticker," \
+            "   timestamp," \
+            "   resolution," \
+            "   high," \
+            "   low," \
+            "   open," \
+            "   close," \
+            "   volume" \
+            ") VALUES(?,?,?,?,?,?,?,?)",
+            (
+                ticker, timestamp, resolution,
+                high, low, open, close, volume
+
+            )
+        )
+
+        await self.connection.commit()
  
 
