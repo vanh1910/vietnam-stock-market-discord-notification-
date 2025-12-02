@@ -1,5 +1,6 @@
 import aiohttp
 import discord
+import random
 import asyncio
 import pandas as pd
 from discord import app_commands
@@ -11,6 +12,7 @@ class Stock(commands.Cog, name="stock"):
     def __init__(self, bot) -> None:
         self.bot = bot
         self.stock_api = APIHandler()
+        self.update_ticker.start()
     """
         Main stock command handler
 
@@ -75,7 +77,7 @@ class Stock(commands.Cog, name="stock"):
         except Exception as e:
             exception = f"{type(e).__name__}: {e}"
             self.logger.error(
-                f"Failed to insert {ticker} into tickers_users {Exception}"
+                f"Failed to insert {ticker} into tickers_users {exception}"
             )
             await context.reply(f"Failed to add {ticker} to watchlist")
             
@@ -109,14 +111,38 @@ class Stock(commands.Cog, name="stock"):
         tickers = await self.bot.database.get_all_tickers()
         await context.reply(tickers)    
     
-    @tasks.loop(minutes=60)
+    @tasks.loop(seconds=60)
     async def update_ticker(self) -> None:
+        #get tickers from db watchlist
         tickers = await self.bot.database.get_all_tickers()
-        tasks = []
-        for ticker in tickers:
-            task = asyncio.create_task(self.stock_api.get_latest_tickers_data(ticker,1,"1"))
+        to_date = pd.Timestamp.now() - pd.Timedelta(hours=10)
+        from_date = to_date - pd.Timedelta(minutes = 1)
+        results = []
+        #fetch data from vietstock
+        try:
+            results = await self.stock_api.get_historical_tickers_data(tickers, from_date, to_date, "1")
+        except Exception as e:
+            exception = f"{type(e).__name__}: {e}"
+            self.bot.logger.error(
+                f"Failed to fetch data: {exception}"
+            )
         
-        
+        #push fetched data to db
+        db_tasks = [
+            self.bot.database.add_ticker_row(result) 
+            for result in results
+        ]
+        await asyncio.gather(*db_tasks)
+
+
+    @update_ticker.before_loop
+    async def before_update_ticker(self) -> None:
+        self.bot.logger.info(
+            "Realtime updating is ready"
+        )
+        await self.bot.wait_until_ready()
+
+
 
 
 
