@@ -107,6 +107,7 @@ class LoggingFormatter(logging.Formatter):
 
 logger = logging.getLogger("discord_bot")
 logger.setLevel(logging.INFO)
+logger.propagate = False  # Prevent propagation to root logger
 
 # Console handler
 console_handler = logging.StreamHandler()
@@ -121,6 +122,10 @@ file_handler.setFormatter(file_handler_formatter)
 # Add the handlers
 logger.addHandler(console_handler)
 logger.addHandler(file_handler)
+
+# Set discord library logging to WARNING to avoid duplicate logs
+discord_logger = logging.getLogger("discord")
+discord_logger.setLevel(logging.WARNING)
 
 
 class DiscordBot(commands.Bot):
