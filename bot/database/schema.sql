@@ -31,4 +31,11 @@ CREATE TABLE IF NOT EXISTS "signals" (
     "signal_id" INTEGER PRIMARY KEY AUTOINCREMENT,
     "type" VARCHAR(10) NOT NULL,
     "value" INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS "cp_channel"(
+    "user_id" INTEGER,
+    "server_id" INTEGER,
+    "channel_id" INTEGER,
+    PRIMARY KEY ("user_id", "server_id", "channel_id")
 )
