@@ -1,12 +1,26 @@
-# Discord Trading Bot
+# 🤖 Personal Discord Bot
 
-Bot Discord tự động thông báo các tín hiệu từ sàn HOSE dựa trên các chỉ báo kỹ thuật như RSI, SMA,...  
+A multi-purpose Discord bot designed for personal assistance, built with modularity in mind.
 
-## Tính năng
-- Nhận dữ liệu từ API của sàn HOSE.
-- Xử lý dữ liệu, tính các chỉ báo kỹ thuật (RSI14, SMA,…).
-- Kiểm tra tín hiệu giao dịch dựa trên các chỉ báo.
-- Gửi thông báo tự động đến user khi có tín hiệu.
-- Có thể mở rộng các lệnh Discord khác qua `cogs/`.
+## ✨ Features
 
-## Cấu trúc project
+### 🎮 Fun & General
+*Powered by the **Krypton** template.*
+- Includes a variety of general-purpose and entertainment commands.
+- Modular structure for easy expansion.
+
+### 📈 Stock Market
+*Tools for tracking the market.*
+- **Real-time Data:** Fetch live stock market data instantly.
+- *More features coming soon™*
+
+### 🏆 Competitive Programming (CP)
+*Utilities for algorithm practice.*
+- **Random Problem:** Command to fetch a random problem from **Codeforces**.
+- *More features coming soon™*
+
+---
+
+### 🚀 Roadmap
+- [ ] Add detailed stock alert.
+- [ ] Expand general utility commands.
