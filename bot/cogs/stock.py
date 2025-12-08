@@ -128,10 +128,21 @@ class Stock(commands.Cog, name="stock"):
             )
         
         #push fetched data to db
-        db_tasks = [
-            self.bot.database.add_ticker_row(result) 
-            for result in results
-        ]
+
+        db_tasks = []
+        for result in results:
+            if (result["s"] == "no_data"): continue
+            db_tasks.append(asyncio.create_task(self.bot.database.add_ticker_row(
+                result["params"]["symbol"],
+                result["t"][-1],
+                result["params"]["resolution"],
+                result["h"][-1],
+                result["l"][-1],
+                result["o"][-1],
+                result["c"][-1],
+                result["v"][-1],
+            )))
+
         await asyncio.gather(*db_tasks)
 
 
