@@ -1,5 +1,4 @@
-
-
+import random
 import aiohttp
 import asyncio
 import json
@@ -11,7 +10,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class APIHandler:
+class StockAPIHandler:
     BASE_URL = "https://api.vietstock.vn/tvnew/history"
     HEADERS = {
         "User-Agent": "Mozilla/5.0",
@@ -88,7 +87,7 @@ class APIHandler:
         return results
 
     async def get_historical_tickers_data(
-            self,
+        self,
         tickers: list,
         from_date: pd.Timestamp,
         to_date: pd.Timestamp,
@@ -104,10 +103,33 @@ class APIHandler:
             json.dump(results, f, ensure_ascii=False, indent=2)
         return results
 
+class CPAPIHandler:
+    BASE_URL = " https://codeforces.com/api/"
+    HEADERS = {
+        'User-Agent': 'Mozilla/5.0',
+        'Accept': 'application/json',
+        'Connection': 'keep-alive'
+    }
+    def __init__(self, timeout: int = 5):
+        self.timeout = aiohttp.ClientTimeout(total=timeout)
+        
 
+    async def fetch_random_problem(self, low: int, high: int):
+        tags = ['*special', '2-sat', 'binary search', 'bitmasks', 'brute force', 'chinese remainder theorem', 'combinatorics', 'constructive algorithms', 'data structures', 'dfs and similar', 'divide and conquer', 'dp', 'dsu', 'expression parsing', 'fft', 'flows', 'games', 'geometry', 'graph matchings', 'graphs', 'greedy', 'hashing', 'implementation', 'interactive', 'math', 'matrices', 'meet-in-the-middle', 'number theory', 'probabilities', 'schedules', 'shortest paths', 'sortings', 'string suffix structures', 'strings', 'ternary search', 'trees', 'two pointers']
+        tag = tags[random(0,len(tags) - 1)]
+        
+        url = self.BASE_URL + "problemset.problems"
+        params = {
+            tags: tag
+        }
+        try:
+            async with session.get(
+                url,
+                head
+            )
  
 async def main():
-    handler = APIHandler()
+    handler = StockAPIHandler()
     range_ = pd.Timedelta(days=2)
     tickers = ["VND", "FPT", "SSI", "HPG", "VCB"]
 
