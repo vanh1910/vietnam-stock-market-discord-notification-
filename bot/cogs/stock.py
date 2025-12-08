@@ -6,12 +6,12 @@ import pandas as pd
 from discord import app_commands
 from discord.ext import commands, tasks
 from discord.ext.commands import Context
-from services.api_handler import APIHandler
+from services.api_handler import StockAPIHandler
 
 class Stock(commands.Cog, name="stock"):
     def __init__(self, bot) -> None:
         self.bot = bot
-        self.stock_api = APIHandler()
+        self.stock_api = StockAPIHandler()
         self.update_ticker.start()
     """
         Main stock command handler
@@ -151,7 +151,7 @@ async def setup(bot) -> None:
     await bot.add_cog(Stock(bot))
 
 def test():
-    api = APIHandler()
+    api = StockAPIHandler()
     range = pd.Timedelta(15,"d")
     data = api.fetch_realtime_data("1D", range, "VCB")
     return data["c"][-1]
