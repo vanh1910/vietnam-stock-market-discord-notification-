@@ -110,42 +110,60 @@ class CPAPIHandler:
         'Accept': 'application/json',
         'Connection': 'keep-alive'
     }
-    def __init__(self, timeout: int = 5):
+    def __init__(self, timeout: int = 20):
         self.timeout = aiohttp.ClientTimeout(total=timeout)
         
 
     async def fetch_random_problem(self, low: int, high: int):
         tags = ['*special', '2-sat', 'binary search', 'bitmasks', 'brute force', 'chinese remainder theorem', 'combinatorics', 'constructive algorithms', 'data structures', 'dfs and similar', 'divide and conquer', 'dp', 'dsu', 'expression parsing', 'fft', 'flows', 'games', 'geometry', 'graph matchings', 'graphs', 'greedy', 'hashing', 'implementation', 'interactive', 'math', 'matrices', 'meet-in-the-middle', 'number theory', 'probabilities', 'schedules', 'shortest paths', 'sortings', 'string suffix structures', 'strings', 'ternary search', 'trees', 'two pointers']
-        tag = tags[random(0,len(tags) - 1)]
+        tag = random.choice(tags)
         
         url = self.BASE_URL + "problemset.problems"
         params = {
-            tags: tag
+            "tags": tag
         }
         try:
-            async with session.get(
-                url,
-                head
-            )
+            async with aiohttp.ClientSession(timeout=self.timeout) as session:
+                async with session.get(
+                    url,
+                    headers=self.HEADERS,
+                    params=params
+                ) as resp:
+                    resp.raise_for_status()
+                    data = await resp.json()
+                    
+                    rand = []
+                    for problem in data["result"]["problems"]:
+                        if low <= int(problem.get('rating',0)) <= high:
+                            rand.append(problem)
+                    return random.choice(rand)
+
+
+
+        except aiohttp.ClientError as e:
+            logger.error(f"API request failed: {e}")
+            return None
  
 async def main():
-    handler = StockAPIHandler()
-    range_ = pd.Timedelta(days=2)
-    tickers = ["VND", "FPT", "SSI", "HPG", "VCB"]
+    # handler = StockAPIHandler()
+    # range_ = pd.Timedelta(days=2)
+    # tickers = ["VND", "FPT", "SSI", "HPG", "VCB"]
 
-    async with aiohttp.ClientSession(timeout=handler.timeout) as session:
-        tasks = [
-            handler.fetch_realtime_data(session, "1", range_, ticker)
-            for ticker in tickers
-        ]
-        results = await asyncio.gather(*tasks)
+    # async with aiohttp.ClientSession(timeout=handler.timeout) as session:
+    #     tasks = [
+    #         handler.fetch_realtime_data(session, "1", range_, ticker)
+    #         for ticker in tickers
+    #     ]
+    #     results = await asyncio.gather(*tasks)
 
-    # Lưu tất cả kết quả ra file
-    with open("data/json/realtime_cache.json", "w", encoding="utf-8") as f:
-        json.dump(results, f, ensure_ascii=False, indent=2)
+    # # Lưu tất cả kết quả ra file
+    # with open("data/json/realtime_cache.json", "w", encoding="utf-8") as f:
+    #     json.dump(results, f, ensure_ascii=False, indent=2)
 
-    logger.info("Đã tải xong tất cả dữ liệu song song.")
-
+    # logger.info("Đã tải xong tất cả dữ liệu song song.")
+    api = CPAPIHandler()
+    problem =  await api.fetch_random_problem(800,2000)
+    print(problem)
 
 if __name__ == "__main__":
     asyncio.run(main())
