@@ -114,7 +114,7 @@ class CPAPIHandler:
         self.timeout = aiohttp.ClientTimeout(total=timeout)
         
 
-    async def fetch_random_problem(self, low: int, high: int):
+    async def fetch_problem(self):
         tags = ['*special', '2-sat', 'binary search', 'bitmasks', 'brute force', 'chinese remainder theorem', 'combinatorics', 'constructive algorithms', 'data structures', 'dfs and similar', 'divide and conquer', 'dp', 'dsu', 'expression parsing', 'fft', 'flows', 'games', 'geometry', 'graph matchings', 'graphs', 'greedy', 'hashing', 'implementation', 'interactive', 'math', 'matrices', 'meet-in-the-middle', 'number theory', 'probabilities', 'schedules', 'shortest paths', 'sortings', 'string suffix structures', 'strings', 'ternary search', 'trees', 'two pointers']
         tag = random.choice(tags)
         
@@ -131,18 +131,38 @@ class CPAPIHandler:
                 ) as resp:
                     resp.raise_for_status()
                     data = await resp.json()
-                    
-                    rand = []
-                    for problem in data["result"]["problems"]:
-                        if low <= int(problem.get('rating',0)) <= high:
-                            rand.append(problem)
-                    return random.choice(rand)
+                    return data
+                    # rand = []
+                    # for problem in data["result"]["problems"]:
+                    #     #if low <= int(problem.get('rating',0)) <= high:
+                    #         rand.append(problem)
+                    # return random.choice(rand)
 
 
 
         except aiohttp.ClientError as e:
             logger.error(f"API request failed: {e}")
             return None
+        
+    async def random_problem(self):
+        data = await self.fetch_problem()
+        problems = data["result"]["problems"]
+        weights = []
+        for problem in problems:
+            rating = problem.get('rating', 0)
+            if rating == 0 or rating > 2700:
+                weights.append(20)
+            else: 
+                weights.append(2*1600 - rating)
+        
+        return random.choices(problems, weights=weights, k=1)[0]
+    
+
+    async def true_random_problem(self):
+        data = await self.fetch_problem()
+        return random.choice(data["result"]["problems"])
+
+
  
 async def main():
     # handler = StockAPIHandler()

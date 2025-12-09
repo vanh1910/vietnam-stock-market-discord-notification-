@@ -10,11 +10,13 @@ from services.api_handler import CPAPIHandler
 # Here we name the cog and create a new class for the cog.
 
 class CP(commands.Cog, name="cp"):
-    daily_problem_time = datetime.time(hour=2, tzinfo=datetime.timezone.utc)
+    daily_problem_time = datetime.time(hour=0, tzinfo=datetime.timezone.utc)
 
     def __init__(self, bot) -> None:
         self.bot = bot
         self.cp_api = CPAPIHandler()
+
+
 
     def __get_rating_color(self, rating):
         if rating < 1200: return 0xCCCCCC # Gray (Newbie)
@@ -53,22 +55,23 @@ class CP(commands.Cog, name="cp"):
         """
         pass
 
-
-
+    @cp.command(
+        name = "save",
+        description = "Save your cp accounts (*Currently only support cf)"
+    )
+    async def save(self, context: Context, platform):
+        pass
+        
 
     @cp.command(
         name = "random",
         description= "get random cp problem"
     )
     async def random_problem(self, context:Context):
-        problem = {}
-        low = 800
-        high = 3500
-        for i in range (10):
-            problem = await self.cp_api.fetch_random_problem(low,high)
-            if problem != None: 
-                break
-        
+        """
+            Replying random problem to user message
+        """
+        problem = await self.cp_api.random_problem()
         problem_link = f"https://codeforces.com/contest/{problem['contestId']}/problem/{problem['index']}"
         embed = discord.Embed(
             title=f"{problem['contestId']}{problem['index']} - {problem['name']}",
@@ -80,13 +83,36 @@ class CP(commands.Cog, name="cp"):
         embed.set_thumbnail(url="https://sta.codeforces.com/s/70808/images/codeforces-telegram-square.png")
 
         await context.reply(embed=embed)
-    
+
+
+
+    @cp.command(
+        name = "truerandom",
+        description = "Random problem without weight"
+    )
+    async def true_random_problem(self, context: Context):
+        """
+            Replying true random problem to user message
+        """
+        problem = await self.cp_api.true_random_problem()
+        problem_link = f"https://codeforces.com/contest/{problem['contestId']}/problem/{problem['index']}"
+        embed = discord.Embed(
+            title=f"{problem['contestId']}{problem['index']} - {problem['name']}",
+            url=problem_link, # Click vào tiêu đề sẽ mở link
+            description=f"**Type:** {problem['type'].title()}",
+            color=self.__get_rating_color(problem.get('rating', 0)) # Set màu theo rating
+        )
+        embed.add_field(name="📊 Rating", value=f"`{problem.get('rating', 'Unrated')}`", inline=True)
+        embed.set_thumbnail(url="https://sta.codeforces.com/s/70808/images/codeforces-telegram-square.png")
+
+        await context.reply(embed=embed)
+
 
     @tasks.loop(time=daily_problem_time)
     async def daily_problem(self) -> None:
         problem = {}
         for i in range (10):
-            problem = await self.cp_api.fetch_random_problem(800, 2300)
+            problem = await self.cp_api.random_problem()
             if problem != None: 
                 break
         
