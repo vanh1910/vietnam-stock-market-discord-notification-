@@ -43,5 +43,6 @@ CREATE TABLE IF NOT EXISTS "cp_channel"(
 CREATE TABLE IF NOT EXISTS "cp_acc"(
     "user_id" INTEGER,
     "handle" VARCHAR(20),
-    "platform" VARCHAR(6)
+    "platform" VARCHAR(6),
+    PRIMARY KEY ("user_id","handle","platform")
 )
