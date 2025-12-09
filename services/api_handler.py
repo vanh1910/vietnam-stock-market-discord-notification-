@@ -132,13 +132,6 @@ class CPAPIHandler:
                     resp.raise_for_status()
                     data = await resp.json()
                     return data
-                    # rand = []
-                    # for problem in data["result"]["problems"]:
-                    #     #if low <= int(problem.get('rating',0)) <= high:
-                    #         rand.append(problem)
-                    # return random.choice(rand)
-
-
 
         except aiohttp.ClientError as e:
             logger.error(f"API request failed: {e}")
@@ -163,6 +156,29 @@ class CPAPIHandler:
         return random.choice(data["result"]["problems"])
 
 
+
+    async def fetch_user_submission(self, handle, from_sub = 1, count_sub = 10):
+        url = self.BASE_URL + "user.status"
+        params = {
+            "handle": handle,
+            "from" : from_sub,
+            "count": count_sub,
+        }
+        try:
+            async with aiohttp.ClientSession(timeout=self.timeout) as session:
+               async with session.get(
+                    url,
+                    headers=self.HEADERS,
+                    params=params
+                ) as resp:
+                    resp.raise_for_status()
+                    data = await resp.json()
+                    return data
+               
+        except aiohttp.ClientError as e:
+            logger.error(f"API request failed: {e}")
+            return None
+
  
 async def main():
     # handler = StockAPIHandler()
@@ -182,8 +198,8 @@ async def main():
 
     # logger.info("Đã tải xong tất cả dữ liệu song song.")
     api = CPAPIHandler()
-    problem =  await api.fetch_random_problem(800,2000)
-    print(problem)
+    sub = await api.fetch_user_submission("vanh1910")
+    print(sub)
 
 if __name__ == "__main__":
     asyncio.run(main())
