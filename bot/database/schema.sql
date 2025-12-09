@@ -38,4 +38,10 @@ CREATE TABLE IF NOT EXISTS "cp_channel"(
     "server_id" INTEGER,
     "channel_id" INTEGER,
     PRIMARY KEY ("user_id", "server_id", "channel_id")
+);
+
+CREATE TABLE IF NOT EXISTS "cp_acc"(
+    "user_id" INTEGER,
+    "handle" VARCHAR(20),
+    "platform" VARCHAR(6)
 )
