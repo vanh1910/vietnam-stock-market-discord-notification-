@@ -10,6 +10,9 @@ import aiosqlite
 
 
 class DatabaseManager:
+
+    #template DB management
+
     def __init__(self, *, connection: aiosqlite.Connection) -> None:
         self.connection = connection
 
@@ -96,6 +99,9 @@ class DatabaseManager:
             return result_list
         
 
+    #DB management for Stock
+
+
     async def add_ticker_user(self, user_id, ticker, server_id):
         await self.connection.execute(
             "INSERT OR REPLACE INTO tickers_users(user_id, ticker, server_id) VALUES(?,?,?)",
@@ -155,3 +161,43 @@ class DatabaseManager:
         await self.connection.commit()
  
 
+    #DB management for CP
+
+    async def add_cp_acc_row(
+            self,
+            user_id,
+            handle,
+            platform
+    ):
+    
+        await self.connection.execute(
+            "INSERT OR REPLACE INTO cp_acc("
+            "   user_id,"
+            "   handle,"
+            "   platform"
+            ") VALUES(?,?,?)",
+            (
+                user_id, handle, platform
+            )
+        )
+        
+        await self.connection.commit()
+
+    async def add_cp_channel_row(
+            self,
+            user_id,
+            server_id,
+            channel_id
+    ):
+        await self.connection.execute(
+            "INSERT OR REPLACE INTO cp_channel(" \
+            "   user_id," \
+            "   server_id" \
+            "   channel_id" \
+            ") VALUES(?,?,?)",
+            (
+                user_id, server_id, channel_id
+            )
+        )
+        await self.connection.commit()
+        
