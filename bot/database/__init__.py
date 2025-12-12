@@ -199,6 +199,16 @@ class DatabaseManager:
         )
         await self.connection.commit()
 
+    async def get_all_cp_channel(self):
+        channels = []
+        rows = await self.connection.execute(
+            "SELECT * FROM cp_channel"
+        )        
+        channels = await rows.fetchall()
+        channels = [row[0] for row in channels]
+        await self.connection.commit()
+        return channels
+
     async def remove_cp_channel_row(
             self, channel_id
     ):

@@ -61,6 +61,7 @@ class CP(commands.Cog, name="cp"):
     def __init__(self, bot) -> None:
         self.bot = bot
         self.cp_api = CPAPIHandler()
+        self.daily_problem.start()
 
 
 
@@ -215,15 +216,51 @@ class CP(commands.Cog, name="cp"):
         embed.set_thumbnail(url="https://sta.codeforces.com/s/70808/images/codeforces-telegram-square.png")
 
         await context.reply(embed=embed)
-
+    
+    @cp.command(
+        name = "channels"
+    )
+    @commands.is_owner()
+    async def get_all_channels(self, context: Context):
+        channels = await self.bot.database.get_all_cp_channel()
+        await context.reply(channels)
 
     @tasks.loop(time=daily_problem_time)
     async def daily_problem(self) -> None:
-        problem = {}
-        for i in range (10):
-            problem = await self.cp_api.random_problem()
-            if problem != None: 
-                break
+        problem = await self.cp_api.random_problem()
+        channels_id = await self.bot.database.get_all_cp_channel()
+
+        for channel_id in channels_id:
+            channel = self.bot.get_channel(channel_id)
+            await asyncio.sleep(0.5)
+            if channel:
+                problem_link = f"https://codeforces.com/contest/{problem['contestId']}/problem/{problem['index']}"
+                embed = discord.Embed(
+                    title=f"{problem['contestId']}{problem['index']} - {problem['name']}",
+                    url=problem_link, # Click vào tiêu đề sẽ mở link
+                    description=f"**Type:** {problem['type'].title()}",
+                    color=self.__get_rating_color(problem.get('rating', 0)) # Set màu theo rating
+                )
+                embed.add_field(name="📊 Rating", value=f"`{problem.get('rating', 'Unrated')}`", inline=True)
+                embed.set_thumbnail(url="https://sta.codeforces.com/s/70808/images/codeforces-telegram-square.png")
+
+                embed.set_author(
+                    name="📅 Daily CP Challenge", 
+                    icon_url="https://cdn-icons-png.flaticon.com/512/4251/4251963.png" # Ví dụ icon lịch
+                )
+
+                await channel.send(embed=embed)
+            else:
+                self.bot.logger.warn(f"Cannot find {channel_id} in cache")
+
+    @daily_problem.before_loop
+    async def before_daily_problem(self) -> None:
+        await self.bot.wait_until_ready()
+                        
+
+                    
+        
+
         
 
                
