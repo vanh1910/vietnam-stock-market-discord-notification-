@@ -150,7 +150,7 @@ class CPAPIHandler:
             if rating == 0 or rating > 2500:
                 weights.append(20)
             elif rating > 1600: 
-                weights.append(2*1600 - rating - 100)
+                weights.append(2*1600 - rating * 1.1 - (rating-1700)//1.5)
             else:
                 weights.append(rating)
         
