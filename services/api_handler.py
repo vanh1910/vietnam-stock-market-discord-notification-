@@ -145,10 +145,10 @@ class CPAPIHandler:
             rating = problem.get('rating', 0)
             if rating == 0 or rating > 2500:
                 weights.append(20)
-            elif rating >= 1600: 
-                weights.append(2*1600 - rating)
+            elif rating > 1600: 
+                weights.append(2*1600 - rating - 100)
             else:
-                weights.append(1600 - rating - 50)
+                weights.append(rating)
         
         return random.choices(problems, weights=weights, k=1)[0]
     
