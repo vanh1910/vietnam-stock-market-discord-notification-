@@ -118,6 +118,7 @@ class DatabaseManager:
             "DELETE FROM tickers_users WHERE user_id = ? AND ticker = ?",
             (user_id, ticker),
         ) 
+        await self.connection.commit()
     
     async def get_all_tickers(self):
         tickers = []
@@ -126,8 +127,9 @@ class DatabaseManager:
         )        
         tickers = await rows.fetchall()
         tickers = [row[0] for row in tickers]
+        await self.connection.commit()
         return tickers
-
+    
     async def add_ticker_row(
             self,
             ticker,
@@ -185,19 +187,24 @@ class DatabaseManager:
 
     async def add_cp_channel_row(
             self,
-            user_id,
-            server_id,
             channel_id
     ):
         await self.connection.execute(
             "INSERT OR REPLACE INTO cp_channel(" \
-            "   user_id," \
-            "   server_id" \
             "   channel_id" \
-            ") VALUES(?,?,?)",
+            ") VALUES(?)",
             (
-                user_id, server_id, channel_id
+                channel_id,
             )
         )
+        await self.connection.commit()
+
+    async def remove_cp_channel_row(
+            self, channel_id
+    ):
+        await self.connection.execute(
+            "DELETE FROM cp_channel WHERE channel_id = ?",
+            (channel_id,),
+        ) 
         await self.connection.commit()
         

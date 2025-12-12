@@ -6,6 +6,9 @@ import asyncio
 import random
 import datetime
 from services.api_handler import CPAPIHandler
+import os
+
+owner_id = os.getenv('OWNER_ID')
 
 # Here we name the cog and create a new class for the cog.
 
@@ -87,17 +90,37 @@ class CP(commands.Cog, name="cp"):
         await context.reply(embed=embed)
 
 
-
     @cp.command(
         name = "set",
         description = "set channel for daily cp problems, or register dm for daily cp problems"
     )
-    async def set(self, context:Context):
+    async def set(self, context:Context) -> None:
         """
             Add server channel, or dm for daily problems
         """
-        pass
+        channel_id = context.channel.id
+        if context.guild:
+            if not (context.message.author.guild_permissions.administrator or context.message.author.id == int(owner_id)):
+                return
+                
+        await self.bot.database.add_cp_channel_row(channel_id)
+        await context.reply("Registering channel completely")
 
+    @cp.command(
+        name = "unset",
+        description = "unset channel for daily cp problems"
+    )
+    async def unset(self, context:Context) -> None:
+        """
+            Add server channel, or dm for daily problems
+        """
+        channel_id = context.channel.id
+        if context.guild:
+            if not (context.message.author.guild_permissions.administrator or context.message.author.id == int(owner_id)):
+                return
+                
+        await self.bot.database.remove_cp_channel_row(channel_id)
+        await context.reply("Unset channel completely")
 
 
 
