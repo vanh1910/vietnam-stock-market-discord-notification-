@@ -84,6 +84,10 @@ class StockAPIHandler:
                 for ticker in tickers
             ]
             results = await asyncio.gather(*tasks)
+        
+        with open("data/json/realtime_cache.json", "w", encoding="utf-8") as f:
+            json.dump(results, f, ensure_ascii=False, indent=2)
+
         return results
 
     async def get_historical_tickers_data(
@@ -183,25 +187,7 @@ class CPAPIHandler:
 
  
 async def main():
-    # handler = StockAPIHandler()
-    # range_ = pd.Timedelta(days=2)
-    # tickers = ["VND", "FPT", "SSI", "HPG", "VCB"]
-
-    # async with aiohttp.ClientSession(timeout=handler.timeout) as session:
-    #     tasks = [
-    #         handler.fetch_realtime_data(session, "1", range_, ticker)
-    #         for ticker in tickers
-    #     ]
-    #     results = await asyncio.gather(*tasks)
-
-    # # Lưu tất cả kết quả ra file
-    # with open("data/json/realtime_cache.json", "w", encoding="utf-8") as f:
-    #     json.dump(results, f, ensure_ascii=False, indent=2)
-
-    # logger.info("Đã tải xong tất cả dữ liệu song song.")
-    api = CPAPIHandler()
-    sub = await api.fetch_user_submission("vanh1910")
-    print(sub)
+    pass
 
 if __name__ == "__main__":
     asyncio.run(main())

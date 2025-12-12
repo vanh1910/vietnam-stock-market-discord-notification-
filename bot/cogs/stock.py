@@ -43,13 +43,13 @@ class Stock(commands.Cog, name="stock"):
     )
     async def price(self, context:Context, ticker):
         async with aiohttp.ClientSession(timeout=self.stock_api.timeout) as session:
-            data = await self.stock_api.fetch_realtime_data(
-                session, "1D",
-                pd.Timedelta(days=15),
-                ticker
+            data = await self.stock_api.get_latest_tickers_data(
+                [ticker],
+                pd.Timestamp.now() -pd.Timedelta(days=14),
+                "1D"
                 )
         try:
-            price = data['c'][-1]
+            price = data[0]['c'][-1]
             await context.reply(f"{ticker} price currently is {price}")
         except:
             await context.reply(f"Cannot get {ticker} price")
@@ -162,10 +162,11 @@ async def setup(bot) -> None:
     await bot.add_cog(Stock(bot))
 
 def test():
-    api = StockAPIHandler()
-    range = pd.Timedelta(15,"d")
-    data = api.fetch_realtime_data("1D", range, "VCB")
-    return data["c"][-1]
+    # api = StockAPIHandler()
+    # range = pd.Timedelta(15,"d")
+    # data = api.fetch_realtime_data("1D", range, "VCB")
+    # return data["c"][-1]
+    pass
 
         
 if __name__ == "__main__":
