@@ -217,6 +217,25 @@ class CP(commands.Cog, name="cp"):
 
         await context.reply(embed=embed)
     
+
+    
+    @cp.command(
+        name = "submit",
+        description = "submit daily problem" 
+    )
+    async def submit(self, context: Context):
+        handle = await self.bot.database.get_cp_handle(context.author.id)
+        subs = await self.cp_api.fetch_user_submission(handle)
+        problem_id = await self.bot.database.get_daily_problem()
+        for sub in subs["result"]:
+            sub_problem_id = f"{sub['problem']['contestId']}{sub['problem']['index']}"
+            if sub_problem_id == problem_id and sub["verdict"] == "OK":
+                await context.reply("Congrats, you completed the problem today uwu")
+                return
+
+
+
+
     @cp.command(
         name = "channels"
     )
@@ -229,6 +248,8 @@ class CP(commands.Cog, name="cp"):
     async def daily_problem(self) -> None:
         problem = await self.cp_api.random_problem()
         channels_id = await self.bot.database.get_all_cp_channel()
+
+
 
         for channel_id in channels_id:
             channel = self.bot.get_channel(channel_id)

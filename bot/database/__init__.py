@@ -218,3 +218,72 @@ class DatabaseManager:
         ) 
         await self.connection.commit()
         
+    async def __get_user_channel(self,user_id):
+        rows = await self.connection.execute(
+            "SELECT * FROM user_cp_streak WHERE user_id =?",
+            (user_id,),
+        )
+        
+        users = await rows.fetchall()
+        await self.connection.commit()
+        try:
+            channel_id = users[0][1]
+            return channel_id
+        except:
+            return None
+
+    async def add_user_cp_streak(
+            self, user_id, channel_id, 
+    ):  
+        used_channel_id = self.__get_user_channel(user_id)
+        if (used_channel_id == channel_id):
+            return
+        elif (used_channel_id == None):
+            await self.connection.execute(
+                "INSERT INTO user_cp_streak(" \
+                "   user_id, channel_id, streak, last_submit" \
+                ") VALUES(?,?,?,?)",
+                (user_id, channel_id, 0,0),
+            )
+        else:
+            await self.connection.execute(
+                "UPDATE user_cp_streak" \
+                "SET channel_id = ?" \
+                "WHERE user_id = ?" \
+                ""
+            )
+
+    async def add_daily_problem(
+            self, date, problem_id, platform
+    ):
+        await self.connection.execute(
+            "INSERT INTO daily_problem(" \
+            "   date, problem_id, platform" \
+            ") VALUES(?,?,?)",
+            (date, problem_id, platform)
+        )
+        await self.connection.commit()
+
+    async def get_cp_handle(
+            self, user_id
+    ):
+        accs = await self.connection.execute(
+            "SELECT * FROM cp_acc WHERE user_id = ?", (user_id,)  ,
+        )
+        accs = await accs.fetchall()
+        accs = [acc[1] for acc in accs]
+        await self.connection.commit()
+        return accs[0]
+        
+
+    async def get_daily_problem(
+            self,
+    ):
+        problems = await self.connection.execute(
+            "SELECT * FROM daily_problem " \
+            "WHERE date = (SELECT MAX(date) FROM daily_problem)"
+        )
+        problems = await problems.fetchall()
+        problems = [problem[1] for problem in problems]
+        await self.connection.commit()
+        return problems[0]

@@ -42,4 +42,18 @@ CREATE TABLE IF NOT EXISTS "cp_acc"(
     "handle" VARCHAR(20),
     "platform" VARCHAR(6),
     PRIMARY KEY ("user_id", "platform")
-)
+);
+
+CREATE TABLE IF NOT EXISTS "user_cp_streak"(
+    "user_id" INTEGER,
+    "channel_id" INTEGER,
+    "streak" INTEGER,
+    "last_submit" INTEGER,
+    PRIMARY KEY ("user_id")
+);
+
+CREATE TABLE IF NOT EXISTS "daily_problem"(
+    "date" INTEGER,
+    "problem_id" VARCHAR(10),
+    "platform" VARCHAR(6)
+);
