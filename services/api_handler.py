@@ -124,7 +124,7 @@ class CPAPIHandler:
         
         url = self.BASE_URL + "problemset.problems"
         params = {
-            "tags": tag
+            "tags": tag  
         }
         try:
             async with aiohttp.ClientSession(timeout=self.timeout) as session:
