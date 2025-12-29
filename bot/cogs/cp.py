@@ -1,10 +1,8 @@
 from discord.ext import commands,tasks
 from discord.ext.commands import Context
 import discord
-import aiohttp
 import asyncio
-import random
-import datetime
+import datetime,time
 from services.api_handler import CPAPIHandler
 import os
 
@@ -227,10 +225,32 @@ class CP(commands.Cog, name="cp"):
         handle = await self.bot.database.get_cp_handle(context.author.id)
         subs = await self.cp_api.fetch_user_submission(handle)
         problem_id = await self.bot.database.get_daily_problem()
+        problem_id = problem_id[1]
+
         for sub in subs["result"]:
             sub_problem_id = f"{sub['problem']['contestId']}{sub['problem']['index']}"
             if sub_problem_id == problem_id and sub["verdict"] == "OK":
                 await context.reply("Congrats, you completed the problem today uwu")
+                #some logic for the submit feat here
+                user_id = context.author.id
+                last_submit_date = await self.bot.database.get_user_last_submit(user_id)
+                streak = await self.bot.database.get_user_streak(user_id)
+                today = int(time.time() // 86400 * 86400)
+                if not streak:
+                    await self.bot.database.new_user_streak(user_id, context.guild.id,1,today)
+                    return
+
+  
+                if today - last_submit_date  > 86400:
+                    await self.bot.database.update_user_streak(user_id, today, 1)
+                elif today == last_submit_date:
+                    return
+                else:
+                    await self.bot.database.update_user_streak(user_id, today, streak + 1)
+                    
+                return
+            else:
+                await context.reply("Lol, did you AC'ed today problem??")
                 return
 
 
@@ -244,11 +264,27 @@ class CP(commands.Cog, name="cp"):
         channels = await self.bot.database.get_all_cp_channel()
         await context.reply(channels)
 
-    @tasks.loop(time=daily_problem_time)
-    async def daily_problem(self) -> None:
+    @cp.command(
+        name = "daily"
+    )
+    @commands.is_owner()
+    async def set_daily_manually(self, context:Context, problem=None):
+        problem = await self.bot.database.get_daily_problem()
+        today  = int(time.time() // 86400 * 86400)
+        last_day = int(problem[0])
+        if (today - last_day) > 86400:
+            await self._daily_problem_task()
+        else:
+            await context.reply("Today problem has already set") 
+
+
+
+    async def _daily_problem_task(self):
         problem = await self.cp_api.random_problem()
         channels_id = await self.bot.database.get_all_cp_channel()
-
+        today = int(time.time() // 86400 * 86400)
+        problem_id = f"{problem['contestId']}{problem['index']}"
+        await self.bot.database.add_daily_problem(today,problem_id,"cf")
 
 
         for channel_id in channels_id:
@@ -273,6 +309,10 @@ class CP(commands.Cog, name="cp"):
                 await channel.send(embed=embed)
             else:
                 self.bot.logger.warn(f"Cannot find {channel_id} in cache")
+
+    @tasks.loop(time=daily_problem_time)
+    async def daily_problem(self) -> None:
+        await self._daily_problem_task()
 
     @daily_problem.before_loop
     async def before_daily_problem(self) -> None:

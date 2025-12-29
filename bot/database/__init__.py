@@ -235,7 +235,7 @@ class DatabaseManager:
     async def add_user_cp_streak(
             self, user_id, channel_id, 
     ):  
-        used_channel_id = self.__get_user_channel(user_id)
+        used_channel_id = await self.__get_user_channel(user_id)
         if (used_channel_id == channel_id):
             return
         elif (used_channel_id == None):
@@ -248,11 +248,13 @@ class DatabaseManager:
         else:
             await self.connection.execute(
                 "UPDATE user_cp_streak" \
-                "SET channel_id = ?" \
+                "SET channel_id = ? " \
                 "WHERE user_id = ?" \
-                ""
+                "VALUES (?,?)",
+                (channel_id, user_id)
             )
-
+        
+        await self.connection.commit()
     async def add_daily_problem(
             self, date, problem_id, platform
     ):
@@ -276,6 +278,7 @@ class DatabaseManager:
         return accs[0]
         
 
+
     async def get_daily_problem(
             self,
     ):
@@ -283,7 +286,51 @@ class DatabaseManager:
             "SELECT * FROM daily_problem " \
             "WHERE date = (SELECT MAX(date) FROM daily_problem)"
         )
-        problems = await problems.fetchall()
-        problems = [problem[1] for problem in problems]
+        problems = await problems.fetchone()
+        return problems
+
+    async def new_user_streak(self, user_id, channel_id, streak=0, last_submit=0 ):
+        await self.connection.execute(
+            "INSERT INTO user_cp_streak (" \
+            "user_id, channel_id, streak, last_submit)" \
+            "VALUES(?,?,?,?)",
+            (user_id, channel_id, streak, last_submit) \
+        )
         await self.connection.commit()
-        return problems[0]
+
+
+    async def get_user_last_submit(
+            self, user_id
+    ):
+        rows = await self.connection.execute(
+            "SELECT last_submit FROM user_cp_streak WHERE user_id = ?",
+            (user_id,),
+        )
+        async with rows as cursor:
+            result = await cursor.fetchone()
+        return result[0] if result is not None else None
+    
+
+    async def get_user_streak(
+            self, user_id
+    ):
+        rows = await self.connection.execute(
+            "SELECT streak FROM user_cp_streak WHERE user_id = ?",
+            (user_id,),
+        )
+        async with rows as cursor:
+            result = await cursor.fetchone()
+        return result[0] if result is not None else None
+    
+
+    async def update_user_streak(
+            self, user_id, date, streak
+    ):
+        await self.connection.execute(
+            "UPDATE user_cp_streak" \
+            "SET last_submit = ?, streak = ?" \
+            "WHERE user_id = ?" \
+            "VALUES (?,?)",
+            (date, streak, user_id)
+        )
+        await self.connection.commit()
