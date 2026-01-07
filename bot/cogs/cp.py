@@ -56,6 +56,11 @@ class SubmitButton(discord.ui.View):
 
 class CP(commands.Cog, name="cp"):
     daily_problem_time = datetime.time(hour=0, minute=10, tzinfo=datetime.timezone.utc)
+    # compute recap time safely (combine with a date, subtract timedelta, take .time())
+    daily_recap_time = (
+        datetime.datetime.combine(datetime.date.today(), daily_problem_time)
+        - datetime.timedelta(minutes=20)
+    ).time()
 
     def __init__(self, bot) -> None:
         self.bot = bot
@@ -448,7 +453,7 @@ class CP(commands.Cog, name="cp"):
         await self.bot.wait_until_ready()
                         
 
-    @tasks.loop (time = daily_problem_time - datetime.timedelta(minute = 20))
+    @tasks.loop(time=daily_recap_time)
     async def daily_recap(self):
         channels_id = await self.bot.database.get_all_cp_channel()
         today = int(time.time() // 86400 * 86400)
