@@ -124,7 +124,7 @@ class CPAPIHandler:
         
         url = self.BASE_URL + "problemset.problems"
         params = {
-            "tags": tag  
+            "tags": tag
         }
         try:
             async with aiohttp.ClientSession(timeout=self.timeout) as session:
@@ -185,6 +185,25 @@ class CPAPIHandler:
             logger.error(f"API request failed: {e}")
             return None
 
+    async def fetch_user_info(self, handle):
+        url = self.BASE_URL + "user.info"
+        params = {
+            "handles": handle,
+            "checkHistoricHandles": "false",
+        }
+        try:
+            async with aiohttp.ClientSession(timeout=self.timeout) as session:
+                async with session.get(
+                    url,
+                    headers = self.HEADERS,
+                    params = params
+                ) as resp:
+                    resp.raise_for_status()
+                    data = await resp.json()
+                    return data
+        except aiohttp.ClientError as e:
+            logger.error(f"API request failed: {e}")
+            return None
  
 async def main():
     pass
