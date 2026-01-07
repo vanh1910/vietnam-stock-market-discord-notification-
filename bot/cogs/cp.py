@@ -8,6 +8,7 @@ import os
 
 owner_id = os.getenv('OWNER_ID')
 
+# For some reason, mostly Im too lazy, I vibecoded all the UI related things
 # Here we name the cog and create a new class for the cog.
 
 class SubmitButton(discord.ui.View):
@@ -235,6 +236,7 @@ class CP(commands.Cog, name="cp"):
                 user_id = context.author.id
                 last_submit_date = await self.bot.database.get_user_last_submit(user_id)
                 streak = await self.bot.database.get_user_streak(user_id)
+                solved_problems = await self.bot.database.get_user_solved_problems(user_id)
                 today = int(time.time() // 86400 * 86400)
                 if not streak:
                     await self.bot.database.new_user_streak(user_id, context.guild.id,1,today)
@@ -242,11 +244,11 @@ class CP(commands.Cog, name="cp"):
 
   
                 if today - last_submit_date  > 86400:
-                    await self.bot.database.update_user_streak(user_id, today, 1)
+                    await self.bot.database.update_user_streak(user_id, today, 1, solved_problems + 1)
                 elif today == last_submit_date:
                     return
                 else:
-                    await self.bot.database.update_user_streak(user_id, today, streak + 1)
+                    await self.bot.database.update_user_streak(user_id, today, streak + 1, solved_problems + 1)
                     
                 return
             else:
@@ -309,6 +311,82 @@ class CP(commands.Cog, name="cp"):
                 await channel.send(embed=embed)
             else:
                 self.bot.logger.warn(f"Cannot find {channel_id} in cache")
+
+    @cp.command(
+        name = "lb",
+        description = "Ranking user"
+    )
+    async def leaderboard(self, context: Context):
+        pass
+
+    @cp.command(
+        name = "cf",
+        description = "get user codeforces info"
+    )
+    async def cf_acc(self, context: Context):
+
+        #By the way, Im lazy in doing UI stuff, so lol I vibecoded this
+
+
+
+        handle = await self.bot.database.get_cp_handle(context.author.id)
+        data = await self.cp_api.fetch_user_info(handle)
+        user_data = data['result'][0]
+
+        handle = user_data.get('handle')
+        rank = user_data.get('rank', 'Unrated')
+        max_rank = user_data.get('maxRank', 'Unrated')
+        rating = user_data.get('rating', 0)
+        max_rating = user_data.get('maxRating', 0)
+        
+        first_name = user_data.get('firstName', '')
+        last_name = user_data.get('lastName', '')
+        full_name = f"{first_name} {last_name}".strip()
+        
+        city = user_data.get('city', '')
+        country = user_data.get('country', '')
+        location = f"{city}, {country}".strip(', ')
+        
+        org = user_data.get('organization', 'N/A')
+        avatar_url = user_data.get('avatar')
+        title_photo = user_data.get('titlePhoto') # Banner image
+        
+        last_online = user_data.get('lastOnlineTimeSeconds')
+        
+        embed = discord.Embed(
+            title=f"{rank.title()}: {handle}",
+            url=f"https://codeforces.com/profile/{handle}",
+            description=f"**{full_name}**\n{org}",
+            color=self.__get_rating_color(rating) # Dynamic color based on rank
+        )
+
+        # Top right thumbnail (Avatar)
+        embed.set_thumbnail(url=avatar_url)
+
+        # Statistics Fields
+        embed.add_field(name="Current Rating", value=f"**{rating}**", inline=True)
+        embed.add_field(name="Max Rating", value=f"**{max_rating}**", inline=True)
+        embed.add_field(name="\u200b", value="\u200b", inline=True) # Spacer
+
+        embed.add_field(name="Rank", value=rank.title(), inline=True)
+        embed.add_field(name="Max Rank", value=max_rank.title(), inline=True)
+        embed.add_field(name="\u200b", value="\u200b", inline=True) # Spacer
+
+        if location:
+            embed.add_field(name="📍 Location", value=location, inline=False)
+
+
+        # Footer with Last Online status
+        # <t:TIMESTAMP:R> turns a timestamp into "5 minutes ago" automatically
+        embed.add_field(
+            name="Last Online", 
+            value=f"<t:{last_online}:R>", 
+            inline=False
+        )
+        
+        embed.set_footer(text="Codeforces Profile", icon_url="https://cdn.iconscout.com/icon/free/png-256/codeforces-3628695-3029920.png")
+
+        await context.send(embed=embed)
 
     @tasks.loop(time=daily_problem_time)
     async def daily_problem(self) -> None:
