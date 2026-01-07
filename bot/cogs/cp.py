@@ -55,7 +55,7 @@ class SubmitButton(discord.ui.View):
 
 
 class CP(commands.Cog, name="cp"):
-    daily_problem_time = datetime.time(hour=0, tzinfo=datetime.timezone.utc)
+    daily_problem_time = datetime.time(hour=0, minute=10, tzinfo=datetime.timezone.utc)
 
     def __init__(self, bot) -> None:
         self.bot = bot
@@ -448,9 +448,38 @@ class CP(commands.Cog, name="cp"):
         await self.bot.wait_until_ready()
                         
 
-                    
-        
+    @tasks.loop (time = daily_problem_time - datetime.timedelta(minute = 20))
+    async def daily_recap(self):
+        channels_id = await self.bot.database.get_all_cp_channel()
+        today = int(time.time() // 86400 * 86400)
 
+        for channel_id in channels_id:
+            channel = self.bot.get_channel(channel_id)
+            await asyncio.sleep(0.5)
+
+            completing_user = []
+            users = self.bot.get_all_user_cp_streak(channel_id)
+            for user in users:
+                if int(user[3]) != today:
+                    await self.bot.database.reset_streak(user[0])
+                else:
+                    completing_user.append(user)
+            
+            if len(completing_user) == 0:
+                channel.send("Bro, the daily problem just mogged the whole server. Y'all actually have 0 aura today. Straight up NPC behavior🥀")
+
+            lines = []
+            lines.append("🎉 **DAILY CHALLENGE RESULTS** 🎉")
+
+            for user in completing_user:
+                lines.append(f"<@{user[0]}> is on a {user[2]} days streak.")
+            lines.append("Congrats ₍^ >ヮ<^₎")
+            final_content = "\n".join(lines)
+            channel.send(final_content)
+
+    @daily_recap.before_loop
+    async def before_daily_recap(self) -> None:
+        await self.bot.wait_until_ready()
         
 
                
