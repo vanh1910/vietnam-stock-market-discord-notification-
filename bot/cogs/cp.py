@@ -234,9 +234,10 @@ class CP(commands.Cog, name="cp"):
                 await context.reply("Congrats, you completed the problem today uwu")
                 #some logic for the submit feat here
                 user_id = context.author.id
-                last_submit_date = await self.bot.database.get_user_last_submit(user_id)
-                streak = await self.bot.database.get_user_streak(user_id)
-                solved_problems = await self.bot.database.get_user_solved_problems(user_id)
+                user_streak_data = await self.bot.database.get_user_cp_streak(user_id)
+                last_submit_date = user_streak_data[1]
+                streak = user_streak_data[0]
+                solved_problems = user_streak_data[2]
                 today = int(time.time() // 86400 * 86400)
                 if not streak:
                     await self.bot.database.new_user_streak(user_id, context.guild.id,1,today)
@@ -317,7 +318,57 @@ class CP(commands.Cog, name="cp"):
         description = "Ranking user"
     )
     async def leaderboard(self, context: Context):
-        pass
+        users = await self.bot.database.get_all_users_cp_streak(context.guild.id)
+        name = []
+        for user in users:
+            user_id = user[0]
+            data = self.bot.get_user(user_id)
+            if data:
+                name.append(data.global_name)
+            else:
+                data = await self.bot.fetch_user(user_id)
+                if data:
+                    name.append(data.global_name)
+
+
+
+        #This is vibecoding
+        w_rank = 3   # Cột số thứ tự
+        w_name = 16  # Cột tên (đủ dài để không bị cắt)
+        w_solv = 8   # Cột Solved
+        w_strk = 8   # Cột Streak
+
+        # 3. Tạo Header
+        # F-string format: {biến : <căn_lề> <độ_rộng>}
+        # < : Trái, ^ : Giữa, > : Phải
+        header = f"{'#':<{w_rank}} | {'Name':<{w_name}} | {'Solved':^{w_solv}} | {'Streak':^{w_strk}}"
+        separator = "-" * len(header) # Dòng kẻ ngang
+
+        # 4. Tạo các dòng dữ liệu (Rows)
+        rows = []
+        for index, user in enumerate(users):
+            # Cắt tên nếu quá dài (Tránh vỡ bảng)
+            name_display = (name[index][:w_name-2] + '..') if len(name[index]) > w_name else name[index]
+            
+            row = f"{index + 1:<{w_rank}} | {name_display:<{w_name}} | {user[4]:^{w_solv}} | {user[2]:^{w_strk}}"
+            rows.append(row)
+
+        # 5. Ghép thành chuỗi hoàn chỉnh
+        # Đặt trong ```text ... ``` để Discord hiển thị font monospace
+        table_content = f"```text\n{header}\n{separator}\n" + "\n".join(rows) + "\n```"
+
+        # 6. Tạo Embed
+        embed = discord.Embed(
+            title="🏆 CP Local Leaderboard",
+            description=table_content, # Bảng nằm ở đây
+            color=0xFFD700 # Màu vàng Gold
+        )
+        
+
+        await context.send(embed=embed)
+            
+
+
 
     @cp.command(
         name = "cf",

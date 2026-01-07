@@ -255,6 +255,7 @@ class DatabaseManager:
             )
         
         await self.connection.commit()
+
     async def add_daily_problem(
             self, date, problem_id, platform
     ):
@@ -297,42 +298,16 @@ class DatabaseManager:
             (user_id, channel_id, streak, last_submit) \
         )
         await self.connection.commit()
+    
 
-
-    async def get_user_last_submit(
-            self, user_id
-    ):
+    async def get_user_cp_streak(self, user_id):
         rows = await self.connection.execute(
-            "SELECT last_submit FROM user_cp_streak WHERE user_id = ?",
+            "SELECT streak, last_submit, solved_problems FROM user_cp_streak WHERE user_id = ?",
             (user_id,),
         )
         async with rows as cursor:
             result = await cursor.fetchone()
-        return result[0] if result is not None else None
-    
-
-    async def get_user_streak(
-            self, user_id
-    ):
-        rows = await self.connection.execute(
-            "SELECT streak FROM user_cp_streak WHERE user_id = ?",
-            (user_id,),
-        )
-        async with rows as cursor:
-            result = await cursor.fetchone()
-        return result[0] if result is not None else None
-    
-    async def get_user_solved_problems(
-            self, user_id
-    ):
-        rows = await self.connection.execute(
-            "SELECT solved_problems FROM user_cp_streak WHERE user_id = ?",
-            (user_id,),
-        )
-        async with rows as cursor:
-            result = await cursor.fetchone()
-        return result[0] if result is not None else None
-    
+        return result if result is not None else None
 
     async def update_user_streak(self, user_id, date, streak, solved_problems):
         await self.connection.execute(
@@ -342,3 +317,11 @@ class DatabaseManager:
             (date, streak, solved_problems, user_id) 
         )
         await self.connection.commit()
+
+    async def get_all_users_cp_streak(self, channel_id):
+        rows = await self.connection.execute(
+            "SELECT * FROM user_cp_streak where channel_id = ? ORDER BY solved_problems",
+            (channel_id,),
+        )
+        users = await rows.fetchall()
+        return users
