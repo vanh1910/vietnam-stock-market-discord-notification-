@@ -241,9 +241,9 @@ class DatabaseManager:
         elif (used_channel_id == None):
             await self.connection.execute(
                 "INSERT INTO user_cp_streak(" \
-                "   user_id, channel_id, streak, last_submit" \
-                ") VALUES(?,?,?,?)",
-                (user_id, channel_id, 0,0),
+                "   user_id, channel_id, streak, last_submit, solved_problems" \
+                ") VALUES(?,?,?,?,?)",
+                (user_id, channel_id,0,0,0),
             )
         else:
             await self.connection.execute(
@@ -322,15 +322,23 @@ class DatabaseManager:
             result = await cursor.fetchone()
         return result[0] if result is not None else None
     
-
-    async def update_user_streak(
-            self, user_id, date, streak
+    async def get_user_solved_problems(
+            self, user_id
     ):
+        rows = await self.connection.execute(
+            "SELECT solved_problems FROM user_cp_streak WHERE user_id = ?",
+            (user_id,),
+        )
+        async with rows as cursor:
+            result = await cursor.fetchone()
+        return result[0] if result is not None else None
+    
+
+    async def update_user_streak(self, user_id, date, streak, solved_problems):
         await self.connection.execute(
-            "UPDATE user_cp_streak" \
-            "SET last_submit = ?, streak = ?" \
-            "WHERE user_id = ?" \
-            "VALUES (?,?)",
-            (date, streak, user_id)
+            "UPDATE user_cp_streak "  
+            "SET last_submit = ?, streak = ?, solved_problems = ? " 
+            "WHERE user_id = ?",
+            (date, streak, solved_problems, user_id) 
         )
         await self.connection.commit()

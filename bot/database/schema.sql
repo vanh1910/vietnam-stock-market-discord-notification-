@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS "user_cp_streak"(
     "channel_id" INTEGER,
     "streak" INTEGER,
     "last_submit" INTEGER,
+    "solved_problems" INTEGER,
     PRIMARY KEY ("user_id")
 );
 
