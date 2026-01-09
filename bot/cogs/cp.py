@@ -240,6 +240,7 @@ class CP(commands.Cog, name="cp"):
                 await context.reply("Congrats, you completed the problem today uwu")
                 #some logic for the submit feat here
                 user_id = context.author.id
+                today = int(time.time() // 86400 * 86400)
                 user_streak_data = await self.bot.database.get_user_cp_streak(user_id)
                 if not user_streak_data:
                     await self.bot.database.new_user_streak(user_id, context.guild.id,1,today)
@@ -247,7 +248,7 @@ class CP(commands.Cog, name="cp"):
                 last_submit_date = user_streak_data[1]
                 streak = user_streak_data[0]
                 solved_problems = user_streak_data[2]
-                today = int(time.time() // 86400 * 86400)
+                
                 
 
   
