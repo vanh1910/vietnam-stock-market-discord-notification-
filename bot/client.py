@@ -73,6 +73,7 @@ If you want to use prefix commands, make sure to also enable the intent below in
 
 
 rootpath = Path(__file__).resolve().parent.parent
+database_path = os.getenv('DB_PATH', f"{rootpath}/data/database.db")
 
 class LoggingFormatter(logging.Formatter):
     # Colors
@@ -150,7 +151,7 @@ class DiscordBot(commands.Bot):
         
     async def init_db(self) -> None:
         async with aiosqlite.connect(
-            f"{rootpath}/data/database.db"
+            database_path
         ) as db:
             with open(
                 f"{rootpath}/bot/database/schema.sql",
@@ -206,7 +207,7 @@ class DiscordBot(commands.Bot):
         self.status_task.start()
         self.database = DatabaseManager(
             connection=await aiosqlite.connect(
-                f"{rootpath}/data/database.db"
+                database_path
             )
         )
 

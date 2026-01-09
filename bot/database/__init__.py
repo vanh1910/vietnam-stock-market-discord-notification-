@@ -293,9 +293,9 @@ class DatabaseManager:
     async def new_user_streak(self, user_id, channel_id, streak=0, last_submit=0 ):
         await self.connection.execute(
             "INSERT INTO user_cp_streak (" \
-            "user_id, channel_id, streak, last_submit)" \
-            "VALUES(?,?,?,?)",
-            (user_id, channel_id, streak, last_submit) \
+            "user_id, channel_id, streak, last_submit, solved_problems)" \
+            "VALUES(?,?,?,?,?)",
+            (user_id, channel_id, streak, last_submit, 1) \
         )
         await self.connection.commit()
     
@@ -325,3 +325,11 @@ class DatabaseManager:
         )
         users = await rows.fetchall()
         return users
+    
+    async def reset_streak(self, user_id):
+        await self.connection.execute(
+            "UPDATE user_cp_streak" \
+            "SET streak = ? WHERE user_id = ?",
+            (0, user_id)
+        )
+        await self.connection.commit()

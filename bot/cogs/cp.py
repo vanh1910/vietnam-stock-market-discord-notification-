@@ -331,13 +331,16 @@ class CP(commands.Cog, name="cp"):
         for user in users:
             user_id = user[0]
             data = self.bot.get_user(user_id)
+            
             if data:
-                name.append(data.global_name)
+                name.append(data.name)
             else:
                 data = await self.bot.fetch_user(user_id)
                 if data:
-                    name.append(data.global_name)
+                    name.append(data.name)
 
+
+        self.bot.logger.info(name)
 
 
         #This is vibecoding
