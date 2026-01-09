@@ -66,6 +66,7 @@ class CP(commands.Cog, name="cp"):
         self.bot = bot
         self.cp_api = CPAPIHandler()
         self.daily_problem.start()
+        self.daily_recap.start()
 
 
 
@@ -240,13 +241,14 @@ class CP(commands.Cog, name="cp"):
                 #some logic for the submit feat here
                 user_id = context.author.id
                 user_streak_data = await self.bot.database.get_user_cp_streak(user_id)
+                if not user_streak_data:
+                    await self.bot.database.new_user_streak(user_id, context.guild.id,1,today)
+                    return
                 last_submit_date = user_streak_data[1]
                 streak = user_streak_data[0]
                 solved_problems = user_streak_data[2]
                 today = int(time.time() // 86400 * 86400)
-                if not streak:
-                    await self.bot.database.new_user_streak(user_id, context.guild.id,1,today)
-                    return
+                
 
   
                 if today - last_submit_date  > 86400:
@@ -257,9 +259,9 @@ class CP(commands.Cog, name="cp"):
                     await self.bot.database.update_user_streak(user_id, today, streak + 1, solved_problems + 1)
                     
                 return
-            else:
-                await context.reply("Lol, did you AC'ed today problem??")
-                return
+            
+        await context.reply("Lol, did you AC'ed today problem??")
+        return
 
 
 
