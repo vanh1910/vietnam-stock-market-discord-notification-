@@ -320,7 +320,7 @@ class DatabaseManager:
 
     async def get_all_users_cp_streak(self, channel_id):
         rows = await self.connection.execute(
-            "SELECT * FROM user_cp_streak where channel_id = ? ORDER BY solved_problems",
+            "SELECT * FROM user_cp_streak where channel_id = ? ORDER BY solved_problems DESC, streak DESC",
             (channel_id,),
         )
         users = await rows.fetchall()

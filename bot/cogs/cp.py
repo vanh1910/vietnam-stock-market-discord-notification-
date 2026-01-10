@@ -469,7 +469,7 @@ class CP(commands.Cog, name="cp"):
             await asyncio.sleep(0.5)
 
             completing_user = []
-            users = self.bot.get_all_user_cp_streak(channel_id)
+            users = self.bot.database.get_all_user_cp_streak(channel_id)
             for user in users:
                 if int(user[3]) != today:
                     await self.bot.database.reset_streak(user[0])
