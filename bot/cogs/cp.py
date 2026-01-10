@@ -465,28 +465,34 @@ class CP(commands.Cog, name="cp"):
         today = int(time.time() // 86400 * 86400)
 
         for channel_id in channels_id:
-            channel = self.bot.get_channel(channel_id)
-            await asyncio.sleep(0.5)
+            try:
+                channel = self.bot.get_channel(int(channel_id))
+                await asyncio.sleep(0.5)
+                if not channel:
+                    self.bot.logger.warning(f"Cannot find channel {channel_id} in cache, skipping")
+                    continue
 
-            completing_user = []
-            users = self.bot.database.get_all_user_cp_streak(channel_id)
-            for user in users:
-                if int(user[3]) != today:
-                    await self.bot.database.reset_streak(user[0])
-                else:
-                    completing_user.append(user)
-            
-            if len(completing_user) == 0:
-                channel.send("Bro, the daily problem just mogged the whole server. Y'all actually have 0 aura today. Straight up NPC behavior🥀")
+                completing_user = []
+                # correct method name and await it
+                users = await self.bot.database.get_all_users_cp_streak(channel_id)
+                for user in users:
+                    if int(user[3]) != today:
+                        await self.bot.database.reset_streak(user[0])
+                    else:
+                        completing_user.append(user)
+                
+                if len(completing_user) == 0:
+                    await channel.send("Bro, the daily problem just mogged the whole server. Y'all actually have 0 aura today. Straight up NPC behavior🥀")
+                    continue
 
-            lines = []
-            lines.append("🎉 **DAILY CHALLENGE RESULTS** 🎉")
-
-            for user in completing_user:
-                lines.append(f"<@{user[0]}> is on a {user[2]} days streak.")
-            lines.append("Congrats ₍^ >ヮ<^₎")
-            final_content = "\n".join(lines)
-            channel.send(final_content)
+                lines = ["🎉 **DAILY CHALLENGE RESULTS** 🎉"]
+                for user in completing_user:
+                    lines.append(f"<@{user[0]}> is on a {user[2]} days streak.")
+                lines.append("Congrats ₍^ >ヮ<^₎")
+                final_content = "\n".join(lines)
+                await channel.send(final_content)
+            except Exception as e:
+                self.bot.logger.exception(f"Error while sending daily recap to channel {channel_id}: {e}")
 
     @daily_recap.before_loop
     async def before_daily_recap(self) -> None:
