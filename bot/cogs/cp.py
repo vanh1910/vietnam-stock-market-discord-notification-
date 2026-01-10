@@ -62,25 +62,18 @@ class CP(commands.Cog, name="cp"):
         - datetime.timedelta(minutes=20)
     ).time()
 
+
+    """
+    init stuff
+    """
+
+
     def __init__(self, bot) -> None:
         self.bot = bot
         self.cp_api = CPAPIHandler()
         self.daily_problem.start()
         self.daily_recap.start()
 
-
-
-    def __get_rating_color(self, rating):
-        if rating < 1200: return 0xCCCCCC # Gray (Newbie)
-        if rating < 1400: return 0x77FF77 # Green (Pupil)
-        if rating < 1600: return 0x03A89E # Cyan (Specialist)
-        if rating < 1900: return 0x0000FF # Blue (Expert)
-        if rating < 2100: return 0xAA00AA # Violet (Candidate Master)
-        if rating < 2300: return 0xFF8C00 # Orange (Master)
-        if rating < 2400: return 0xFF8C00 # Orange (International Master) - CF dùng chung màu cam
-        if rating < 2600: return 0xFF0000 # Red (Grandmaster)
-        return 0xFF0000 # Red (Legendary GM)
-        
     @commands.hybrid_group(
             name="cp", 
             description="commands for cp grinders"
@@ -95,6 +88,43 @@ class CP(commands.Cog, name="cp"):
             )
         await context.reply(embed=embed)
 
+    """
+    UI stuff
+    """
+
+    def __get_rating_color(self, rating):
+        if rating < 1200: return 0xCCCCCC # Gray (Newbie)
+        if rating < 1400: return 0x77FF77 # Green (Pupil)
+        if rating < 1600: return 0x03A89E # Cyan (Specialist)
+        if rating < 1900: return 0x0000FF # Blue (Expert)
+        if rating < 2100: return 0xAA00AA # Violet (Candidate Master)
+        if rating < 2300: return 0xFF8C00 # Orange (Master)
+        if rating < 2400: return 0xFF8C00 # Orange (International Master) - CF dùng chung màu cam
+        if rating < 2600: return 0xFF0000 # Red (Grandmaster)
+        return 0xFF0000 # Red (Legendary GM)
+    
+
+    def __embedding_cf(self, problem):
+        problem_link = f"https://codeforces.com/contest/{problem['contestId']}/problem/{problem['index']}"
+        embed = discord.Embed(
+            title=f"{problem['contestId']}{problem['index']} - {problem['name']}",
+            url=problem_link, # Click vào tiêu đề sẽ mở link
+            color=self.__get_rating_color(problem.get('rating', 0)) # Set màu theo rating
+        )
+        embed.add_field(name="📊 Rating", value=f"`{problem.get('rating', 'Unrated')}`", inline=True)
+        embed.set_thumbnail(url="https://sta.codeforces.com/s/70808/images/codeforces-telegram-square.png")
+        return embed
+
+
+
+
+
+    
+
+
+    """
+    Register stuff
+    """
 
     @cp.command(
         name = "set",
@@ -127,6 +157,8 @@ class CP(commands.Cog, name="cp"):
                 
         await self.bot.database.remove_cp_channel_row(channel_id)
         await context.reply("Unset channel completely")
+
+
 
 
 
@@ -176,7 +208,9 @@ class CP(commands.Cog, name="cp"):
             await message.edit(embed=embed, view=button)
 
         
-
+    """
+    Random stuff
+    """
         
 
     @cp.command(
@@ -188,16 +222,7 @@ class CP(commands.Cog, name="cp"):
             Replying random problem to user message
         """
         problem = await self.cp_api.random_problem()
-        problem_link = f"https://codeforces.com/contest/{problem['contestId']}/problem/{problem['index']}"
-        embed = discord.Embed(
-            title=f"{problem['contestId']}{problem['index']} - {problem['name']}",
-            url=problem_link, # Click vào tiêu đề sẽ mở link
-            color=self.__get_rating_color(problem.get('rating', 0)) # Set màu theo rating
-        )
-        embed.add_field(name="📊 Rating", value=f"`{problem.get('rating', 'Unrated')}`", inline=True)
-        embed.set_thumbnail(url="https://sta.codeforces.com/s/70808/images/codeforces-telegram-square.png")
-
-        await context.reply(embed=embed)
+        await context.reply(embed=self.__embedding_cf(problem))
 
 
 
@@ -210,62 +235,15 @@ class CP(commands.Cog, name="cp"):
             Replying true random problem to user message
         """
         problem = await self.cp_api.true_random_problem()
-        problem_link = f"https://codeforces.com/contest/{problem['contestId']}/problem/{problem['index']}"
-        embed = discord.Embed(
-            title=f"{problem['contestId']}{problem['index']} - {problem['name']}",
-            url=problem_link, # Click vào tiêu đề sẽ mở link
-            description=f"**Type:** {problem['type'].title()}",
-            color=self.__get_rating_color(problem.get('rating', 0)) # Set màu theo rating
-        )
-        embed.add_field(name="📊 Rating", value=f"`{problem.get('rating', 'Unrated')}`", inline=True)
-        embed.set_thumbnail(url="https://sta.codeforces.com/s/70808/images/codeforces-telegram-square.png")
-
-        await context.reply(embed=embed)
+        await context.reply(embed=self.__embedding_cf(problem))
     
 
+
+
+    """
+    Owner stuff
+    """
     
-    @cp.command(
-        name = "submit",
-        description = "submit daily problem" 
-    )
-    async def submit(self, context: Context):
-        handle = await self.bot.database.get_cp_handle(context.author.id)
-        subs = await self.cp_api.fetch_user_submission(handle)
-        problem_id = await self.bot.database.get_daily_problem()
-        problem_id = problem_id[1]
-
-        for sub in subs["result"]:
-            sub_problem_id = f"{sub['problem']['contestId']}{sub['problem']['index']}"
-            if sub_problem_id == problem_id and sub["verdict"] == "OK":
-                await context.reply("Congrats, you completed the problem today uwu")
-                #some logic for the submit feat here
-                user_id = context.author.id
-                today = int(time.time() // 86400 * 86400)
-                user_streak_data = await self.bot.database.get_user_cp_streak(user_id)
-                if not user_streak_data:
-                    await self.bot.database.new_user_streak(user_id, context.guild.id,1,today)
-                    return
-                last_submit_date = user_streak_data[1]
-                streak = user_streak_data[0]
-                solved_problems = user_streak_data[2]
-                
-                
-
-  
-                if today - last_submit_date  > 86400:
-                    await self.bot.database.update_user_streak(user_id, today, 1, solved_problems + 1)
-                elif today == last_submit_date:
-                    return
-                else:
-                    await self.bot.database.update_user_streak(user_id, today, streak + 1, solved_problems + 1)
-                    
-                return
-            
-        await context.reply("Lol, did you AC'ed today problem??")
-        return
-
-
-
 
     @cp.command(
         name = "channels"
@@ -275,51 +253,16 @@ class CP(commands.Cog, name="cp"):
         channels = await self.bot.database.get_all_cp_channel()
         await context.reply(channels)
 
-    @cp.command(
-        name = "daily"
-    )
-    @commands.is_owner()
-    async def set_daily_manually(self, context:Context, problem=None):
-        problem = await self.bot.database.get_daily_problem()
-        today  = int(time.time() // 86400 * 86400)
-        last_day = int(problem[0])
-        if (today - last_day) > 86400:
-            await self._daily_problem_task()
-        else:
-            await context.reply("Today problem has already set") 
 
 
 
-    async def _daily_problem_task(self):
-        problem = await self.cp_api.random_problem()
-        channels_id = await self.bot.database.get_all_cp_channel()
-        today = int(time.time() // 86400 * 86400)
-        problem_id = f"{problem['contestId']}{problem['index']}"
-        await self.bot.database.add_daily_problem(today,problem_id,"cf")
+   
+    """
+    Leaderboard stuff
+    """
 
 
-        for channel_id in channels_id:
-            channel = self.bot.get_channel(channel_id)
-            await asyncio.sleep(0.5)
-            if channel:
-                problem_link = f"https://codeforces.com/contest/{problem['contestId']}/problem/{problem['index']}"
-                embed = discord.Embed(
-                    title=f"{problem['contestId']}{problem['index']} - {problem['name']}",
-                    url=problem_link, # Click vào tiêu đề sẽ mở link
-                    description=f"**Type:** {problem['type'].title()}",
-                    color=self.__get_rating_color(problem.get('rating', 0)) # Set màu theo rating
-                )
-                embed.add_field(name="📊 Rating", value=f"`{problem.get('rating', 'Unrated')}`", inline=True)
-                embed.set_thumbnail(url="https://sta.codeforces.com/s/70808/images/codeforces-telegram-square.png")
-
-                embed.set_author(
-                    name="📅 Daily CP Challenge", 
-                    icon_url="https://cdn-icons-png.flaticon.com/512/4251/4251963.png" # Ví dụ icon lịch
-                )
-
-                await channel.send(embed=embed)
-            else:
-                self.bot.logger.warn(f"Cannot find {channel_id} in cache")
+    
 
     @cp.command(
         name = "lb",
@@ -379,6 +322,9 @@ class CP(commands.Cog, name="cp"):
         await context.send(embed=embed)
             
 
+    """
+    Retrieve user info
+    """
 
 
     @cp.command(
@@ -450,6 +396,93 @@ class CP(commands.Cog, name="cp"):
 
         await context.send(embed=embed)
 
+
+
+    """
+        Daily problem stuff
+    """
+
+    @cp.command(
+        name = "submit",
+        description = "submit daily problem" 
+    )
+    async def submit(self, context: Context):
+        handle = await self.bot.database.get_cp_handle(context.author.id)
+        subs = await self.cp_api.fetch_user_submission(handle)
+        problem_id = await self.bot.database.get_daily_problem()
+        problem_id = problem_id[1]
+
+        for sub in subs["result"]:
+            sub_problem_id = f"{sub['problem']['contestId']}{sub['problem']['index']}"
+            if sub_problem_id == problem_id and sub["verdict"] == "OK":
+                await context.reply("Congrats, you completed the problem today uwu")
+                #some logic for the submit feat here
+                user_id = context.author.id
+                today = int(time.time() // 86400 * 86400)
+                user_streak_data = await self.bot.database.get_user_cp_streak(user_id)
+                if not user_streak_data:
+                    await self.bot.database.new_user_streak(user_id, context.guild.id,1,today)
+                    return
+                last_submit_date = user_streak_data[1]
+                streak = user_streak_data[0]
+                solved_problems = user_streak_data[2]
+                
+                
+
+  
+                if today - last_submit_date  > 86400:
+                    await self.bot.database.update_user_streak(user_id, today, 1, solved_problems + 1)
+                elif today == last_submit_date:
+                    return
+                else:
+                    await self.bot.database.update_user_streak(user_id, today, streak + 1, solved_problems + 1)
+                    
+                return
+            
+        await context.reply("Lol, did you AC'ed today problem??")
+        return
+
+
+
+
+    @cp.command(
+        name = "daily"
+    )
+    @commands.is_owner()
+    async def set_daily_manually(self, context:Context, problem=None):
+        problem = await self.bot.database.get_daily_problem()
+        today  = int(time.time() // 86400 * 86400)
+        last_day = int(problem[0])
+        if (today - last_day) > 86400:
+            await self._daily_problem_task()
+        else:
+            await context.reply("Today problem has already set") 
+
+
+    async def _daily_problem_task(self):
+        problem = await self.cp_api.random_problem()
+        channels_id = await self.bot.database.get_all_cp_channel()
+        today = int(time.time() // 86400 * 86400)
+        problem_id = f"{problem['contestId']}{problem['index']}"
+        await self.bot.database.add_daily_problem(today,problem_id,"cf")
+
+
+        for channel_id in channels_id:
+            channel = self.bot.get_channel(channel_id)
+            await asyncio.sleep(0.5)
+            if channel:
+                problem_link = f"https://codeforces.com/contest/{problem['contestId']}/problem/{problem['index']}"
+                embed = self.__embedding_cf()
+
+                embed.set_author(
+                    name="📅 Daily CP Challenge", 
+                    icon_url="https://cdn-icons-png.flaticon.com/512/4251/4251963.png" # Ví dụ icon lịch
+                )
+
+                await channel.send(embed=embed)
+            else:
+                self.bot.logger.warn(f"Cannot find {channel_id} in cache")
+
     @tasks.loop(time=daily_problem_time)
     async def daily_problem(self) -> None:
         await self._daily_problem_task()
@@ -458,6 +491,11 @@ class CP(commands.Cog, name="cp"):
     async def before_daily_problem(self) -> None:
         await self.bot.wait_until_ready()
                         
+
+    """
+    Recap stuff
+    """
+
 
     @tasks.loop(time=daily_recap_time)
     async def daily_recap(self):
