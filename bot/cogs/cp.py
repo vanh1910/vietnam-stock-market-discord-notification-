@@ -456,7 +456,7 @@ class CP(commands.Cog, name="cp"):
         if (today - last_day) > 86400:
             await self._daily_problem_task()
         else:
-            await context.reply("Today problem has already set") 
+            await context.reply(self.__embedding_cf(problem)) 
 
 
     async def _daily_problem_task(self):
