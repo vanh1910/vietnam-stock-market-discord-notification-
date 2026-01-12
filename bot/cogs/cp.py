@@ -460,6 +460,8 @@ class CP(commands.Cog, name="cp"):
 
 
     async def _daily_problem_task(self):
+        await self.cp_api.build_dynamic_weight_map()
+        await self.cp_api.update_data()
         problem = await self.cp_api.random_problem()
         channels_id = await self.bot.database.get_all_cp_channel()
         today = int(time.time() // 86400 * 86400)
@@ -472,7 +474,7 @@ class CP(commands.Cog, name="cp"):
             await asyncio.sleep(0.5)
             if channel:
                 problem_link = f"https://codeforces.com/contest/{problem['contestId']}/problem/{problem['index']}"
-                embed = self.__embedding_cf()
+                embed = self.__embedding_cf(problem)
 
                 embed.set_author(
                     name="📅 Daily CP Challenge", 
@@ -535,9 +537,6 @@ class CP(commands.Cog, name="cp"):
     @daily_recap.before_loop
     async def before_daily_recap(self) -> None:
         await self.bot.wait_until_ready()
-        
-
-               
 
 async def setup(bot) -> None:
     await bot.add_cog(CP(bot))
