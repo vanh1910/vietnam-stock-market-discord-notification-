@@ -3,7 +3,7 @@ from discord.ext.commands import Context
 import discord
 import asyncio
 import datetime,time
-from services.api_handler import CPAPIHandler
+from services.api_handler import CPAPIHANDLER
 import os
 
 owner_id = os.getenv('OWNER_ID')
@@ -17,7 +17,7 @@ class SubmitButton(discord.ui.View):
         self.handle = handle
         self.platform = platform
         self.problem = problem
-        self.cp_api = CPAPIHandler()
+        self.cp_api = CPAPIHANDLER()
         self.result = False
 
     @discord.ui.button(label="Done", style=discord.ButtonStyle.blurple)
@@ -70,7 +70,7 @@ class CP(commands.Cog, name="cp"):
 
     def __init__(self, bot) -> None:
         self.bot = bot
-        self.cp_api = CPAPIHandler()
+        self.cp_api = CPAPIHANDLER()
         self.daily_problem.start()
         self.daily_recap.start()
 
