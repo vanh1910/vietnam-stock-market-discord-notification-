@@ -164,7 +164,7 @@ class CFHandler:
                 problem["rating"]
             except:
                 continue
-            id = f"{problem["contestId"]}_{problem["index"]}"
+            id = f"{problem["contestId"]}_{problem["index"].lower()}"
             problem.pop("type")
             problem.pop("tags")
             if "points" in problem:
@@ -289,7 +289,7 @@ class ATCODERAPIHANDLER:
                     "contestId": problem["contest_id"],
                     "index": problem["problem_index"],
                     "rating": models[id]["difficulty"] if models[id]["difficulty"] is not None else -1000,
-                    "platform": "atcoder",
+                    "platform": "at",
                     "name": problem["name"]
                 }
             except:

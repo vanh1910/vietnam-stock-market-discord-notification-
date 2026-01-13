@@ -5,6 +5,7 @@ import asyncio
 import datetime,time
 from services.api_handler import CPAPIHANDLER
 import os
+import json
 
 owner_id = os.getenv('OWNER_ID')
 
@@ -59,10 +60,8 @@ class CP(commands.Cog, name="cp"):
     # compute recap time safely (combine with a date, subtract timedelta, take .time())
     daily_recap_time = (
         datetime.datetime.combine(datetime.date.today(), daily_problem_time)
-        - datetime.timedelta(minutes=20)
+         datetime.timedelta(hours=0,minutes=20)
     ).time()
-
-
     """
     init stuff
     """
@@ -71,6 +70,7 @@ class CP(commands.Cog, name="cp"):
     def __init__(self, bot) -> None:
         self.bot = bot
         self.cp_api = CPAPIHANDLER()
+        self.update_problems.start()
         self.daily_problem.start()
         self.daily_recap.start()
 
@@ -105,14 +105,19 @@ class CP(commands.Cog, name="cp"):
     
 
     def __embedding_cf(self, problem):
-        problem_link = f"https://codeforces.com/contest/{problem['contestId']}/problem/{problem['index']}"
+        if (problem["platform"] == "cf"):
+            problem_link = f"https://codeforces.com/contest/{problem['contestId']}/problem/{problem['index']}"
+            thumbnail = "https://sta.codeforces.com/s/70808/images/codeforces-telegram-square.png"
+        else:
+            problem_link = f"https://atcoder.jp/contests/{problem['contestId']}/tasks/{problem['contestId']}_{problem['index'].lower()}"
+            thumbnail = "https://img.atcoder.jp/assets/atcoder.png"
         embed = discord.Embed(
             title=f"{problem['contestId']}{problem['index']} - {problem['name']}",
             url=problem_link, # Click vào tiêu đề sẽ mở link
-            color=self.__get_rating_color(problem.get('rating', 0)) # Set màu theo rating
+            color=self.__get_rating_color(int(problem.get('rating', 0))) # Set màu theo rating
         )
         embed.add_field(name="📊 Rating", value=f"`{problem.get('rating', 'Unrated')}`", inline=True)
-        embed.set_thumbnail(url="https://sta.codeforces.com/s/70808/images/codeforces-telegram-square.png")
+        embed.set_thumbnail(url=thumbnail)
         return embed
 
 
@@ -269,7 +274,7 @@ class CP(commands.Cog, name="cp"):
         description = "Ranking user"
     )
     async def leaderboard(self, context: Context):
-        users = await self.bot.database.get_all_users_cp_streak(context.guild.id)
+        users = await self.bot.database.get_all_users_cp_streak(context.channel.id)
         name = []
         for user in users:
             user_id = user[0]
@@ -283,7 +288,6 @@ class CP(commands.Cog, name="cp"):
                     name.append(data.name)
 
 
-        self.bot.logger.info(name)
 
 
         #This is vibecoding
@@ -421,7 +425,7 @@ class CP(commands.Cog, name="cp"):
                 today = int(time.time() // 86400 * 86400)
                 user_streak_data = await self.bot.database.get_user_cp_streak(user_id)
                 if not user_streak_data:
-                    await self.bot.database.new_user_streak(user_id, context.guild.id,1,today)
+                    await self.bot.database.new_user_streak(user_id, context.channel.id,1,today)
                     return
                 last_submit_date = user_streak_data[1]
                 streak = user_streak_data[0]
@@ -443,6 +447,10 @@ class CP(commands.Cog, name="cp"):
         return
 
 
+    def __convert_id (self, id :str, platform: str):
+        for i in range (len(id)):
+            if id[i].isalpha():
+                return f"{platform}_{id[0:i]}_{id[i::].lower()}"
 
 
     @cp.command(
@@ -453,20 +461,22 @@ class CP(commands.Cog, name="cp"):
         problem = await self.bot.database.get_daily_problem()
         today  = int(time.time() // 86400 * 86400)
         last_day = int(problem[0])
-        if (today - last_day) > 86400:
+        if (today - last_day) >= 86400:
             await self._daily_problem_task()
         else:
-            await context.reply(self.__embedding_cf(problem)) 
+            id = self.__convert_id(problem[1], problem[2])
+            with open("data/json/problems.json") as f:
+                data = json.loads(f.read())
+            problem = data[id]
+            await context.reply(embed = self.__embedding_cf(problem)) 
 
 
     async def _daily_problem_task(self):
-        await self.cp_api.build_dynamic_weight_map()
-        await self.cp_api.update_data()
         problem = await self.cp_api.random_problem()
         channels_id = await self.bot.database.get_all_cp_channel()
         today = int(time.time() // 86400 * 86400)
         problem_id = f"{problem['contestId']}{problem['index']}"
-        await self.bot.database.add_daily_problem(today,problem_id,"cf")
+        await self.bot.database.add_daily_problem(today,problem_id,problem["platform"])
 
 
         for channel_id in channels_id:
@@ -492,12 +502,30 @@ class CP(commands.Cog, name="cp"):
     @daily_problem.before_loop
     async def before_daily_problem(self) -> None:
         await self.bot.wait_until_ready()
+
+
+    @tasks.loop(time=daily_recap_time)
+    async def update_problems(self):
+        if datetime.datetime.now().weekday() != 0:
+            return
+        self.cp_api.build_dynamic_weight_map()
+        await self.cp_api.update_data()
+    
+    @update_problems.before_loop
+    async def before_daily_problem(self) -> None:
+        await self.bot.wait_until_ready()
                         
 
     """
     Recap stuff
     """
 
+    @cp.command(
+        name = "test"
+    )
+    @commands.is_owner()
+    async def test(self, context: Context):
+        await context.reply(context.guild.id)
 
     @tasks.loop(time=daily_recap_time)
     async def daily_recap(self):
@@ -513,8 +541,10 @@ class CP(commands.Cog, name="cp"):
                     continue
 
                 completing_user = []
+                self.bot.logger.info(channel_id)
                 # correct method name and await it
                 users = await self.bot.database.get_all_users_cp_streak(channel_id)
+                self.bot.logger.info(users)
                 for user in users:
                     if int(user[3]) != today:
                         await self.bot.database.reset_streak(user[0])

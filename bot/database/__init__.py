@@ -328,8 +328,10 @@ class DatabaseManager:
     
     async def reset_streak(self, user_id):
         await self.connection.execute(
-            "UPDATE user_cp_streak" \
-            "SET streak = ? WHERE user_id = ?",
+            """
+            UPDATE user_cp_streak
+            SET streak = ? WHERE user_id = ?
+            """,
             (0, user_id)
         )
         await self.connection.commit()
