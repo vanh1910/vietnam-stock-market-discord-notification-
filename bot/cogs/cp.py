@@ -60,7 +60,7 @@ class CP(commands.Cog, name="cp"):
     # compute recap time safely (combine with a date, subtract timedelta, take .time())
     daily_recap_time = (
         datetime.datetime.combine(datetime.date.today(), daily_problem_time)
-         datetime.timedelta(hours=0,minutes=20)
+        - datetime.timedelta(hours=0,minutes=20)
     ).time()
     """
     init stuff
